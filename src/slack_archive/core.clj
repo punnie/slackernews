@@ -13,33 +13,25 @@
 (defn fetch-groups []
   (pmap db/insert-channel (-> (slack/get-groups) :groups)))
 
-(defn fetch-channel-messages [channel-id & {:keys [retrieve-count] :or {retrieve-count 100}}]
+(defn fetch-messages [slack-fn id & {:keys [retrieve-count] :or {retrieve-count 100}}]
   (loop [latest nil]
-    (let [response      (slack/get-channel-messages channel-id
-                                                    :latest latest
-                                                    :retrieve-count retrieve-count)
+    (let [response      (slack-fn id
+                                  :latest latest
+                                  :retrieve-count retrieve-count)
           messages      (-> response :messages)
           has-more      (-> response :has_more)
           message-count (count messages)]
       (when (> message-count 0)
-        (pmap #(let [message (-> % (assoc :channel channel-id))]
-                  (db/insert-message message)) messages))
-      (when (= has-more true)
-        (recur (-> messages last :ts))))))
-
-(defn fetch-group-messages [group-id & {:keys [retrieve-count] :or {retrieve-count 100}}]
-  (loop [latest nil]
-    (let [response      (slack/get-group-messages group-id
-                                                  :latest latest
-                                                  :retrieve-count retrieve-count)
-          messages      (-> response :messages)
-          has-more      (-> response :has_more)
-          message-count (count messages)]
-      (when (> message-count 0)
-        (pmap #(let [message (-> % (assoc :channel group-id))]
+        (pmap #(let [message (-> % (assoc :channel id))]
                  (db/insert-message message)) messages))
       (when (= has-more true)
         (recur (-> messages last :ts))))))
+
+(def fetch-channel-messages
+  (partial fetch-messages slack/get-channel-messages))
+
+(def fetch-group-messages
+  (partial fetch-messages slack/get-group-messages))
 
 (defn -main
   "I don't do a whole lot ... yet."
