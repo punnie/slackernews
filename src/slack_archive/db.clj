@@ -47,3 +47,15 @@
       (r/limit 1)
       (r/run conn)
       first))
+
+(defn get-links-from-channel [channel-id]
+  (-> (r/table "messages")
+      (r/order-by {:index (r/desc :ts)})
+      (r/filter (r/fn [row]
+                  (r/and
+                   (r/eq channel-id (r/get-field row :channel))
+                   (r/gt (r/count (r/get-field row :attachments)) 0))))
+      (r/limit 50)
+      (r/run conn)))
+
+; r.db('slack_archive').table('messages').filter(r.row('attachments').count().gt(0)).limit(25)
