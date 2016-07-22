@@ -1,7 +1,7 @@
-(ns slack-archive.core
+(ns slackernews.core
   (:require [mount.core :as mount]
-            [slack-archive.db :as db]
-            [slack-archive.slack :as slack])
+            [slackernews.db :as db]
+            [slackernews.slack :as slack])
   (:gen-class))
 
 (defn fetch-users []

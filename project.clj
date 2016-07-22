@@ -1,4 +1,4 @@
-(defproject slack-archive "0.1.0-SNAPSHOT"
+(defproject slackernews "0.1.0-SNAPSHOT"
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
@@ -9,6 +9,6 @@
                  [org.clojure/data.json "0.2.6"]
                  [mount "0.1.10"]
                  [clj-time "0.12.0"]]
-  :main ^:skip-aot slack-archive.core
+  :main ^:skip-aot slackernews.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})

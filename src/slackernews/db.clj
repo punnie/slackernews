@@ -1,10 +1,10 @@
-(ns slack-archive.db
+(ns slackernews.db
   (:require [mount.core :refer [defstate]]
             [rethinkdb.query :as r]
             [rethinkdb.core :as rc]))
 
 (defstate conn
-  :start (r/connect :host "192.168.99.100" :port 28015 :db "slack_archive")
+  :start (r/connect :host "192.168.99.100" :port 28015 :db "slackernews")
   :stop  (rc/close conn))
 
 (defn get-all-users []

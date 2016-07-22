@@ -1,4 +1,4 @@
-(ns slack-archive.slack
+(ns slackernews.slack
   (:require [clj-http.client :as http]
             [clojure.data.json :as json]))
 
