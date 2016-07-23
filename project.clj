@@ -8,7 +8,10 @@
                  [com.apa512/rethinkdb "0.15.26"]
                  [org.clojure/data.json "0.2.6"]
                  [mount "0.1.10"]
-                 [clj-time "0.12.0"]]
+                 [http-kit "2.1.18"]
+                 [compojure "1.5.1"]
+                 [javax.servlet/servlet-api "2.5"]
+                 [hiccup "1.0.5"]]
   :main ^:skip-aot slackernews.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
