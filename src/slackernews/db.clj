@@ -21,6 +21,13 @@
       (r/insert user {:conflict :update :durability :hard})
       (r/run conn)))
 
+(defn get-channel-by-id [channel-id]
+  (-> (r/table "channels")
+      (r/filter (r/fn [row]
+                  (r/eq channel-id (r/get-field row :id))))
+      (r/run conn)
+      first))
+
 (defn get-channel-by-name [name]
   (-> (r/table "channels")
       (r/filter (r/fn [row]
@@ -48,6 +55,20 @@
       (r/run conn)
       first))
 
+(defn get-links [& {:keys [page] :or {page 0}}]
+  (let [per-page 25
+        skip (* page per-page)]
+    (-> (r/table "messages")
+        (r/order-by {:index (r/desc :ts)})
+        (r/filter (r/fn [row]
+                    (r/and
+                     (r/gt (r/count (r/get-field row :attachments)) 0)
+                     (r/match (r/get-field row :text) "<http.*>")
+                     (r/eq "message" (r/get-field row :type)))))
+        (r/skip skip)
+        (r/limit per-page)
+        (r/run conn))))
+
 (defn get-links-from-channel [channel-id]
   (-> (r/table "messages")
       (r/order-by {:index (r/desc :ts)})
@@ -55,7 +76,4 @@
                   (r/and
                    (r/eq channel-id (r/get-field row :channel))
                    (r/gt (r/count (r/get-field row :attachments)) 0))))
-      (r/limit 50)
       (r/run conn)))
-
-; r.db('slack_archive').table('messages').filter(r.row('attachments').count().gt(0)).limit(25)

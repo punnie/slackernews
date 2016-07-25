@@ -1,7 +1,8 @@
 (ns slackernews.core
   (:require [mount.core :as mount]
             [slackernews.http :as http]
-            [slackernews.handler :as handler])
+            [slackernews.handler :as handler]
+            [slackernews.scrapper :as scrapper])
   (:gen-class))
 
 (mount/defstate http-server

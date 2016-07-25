@@ -1,0 +1,55 @@
+body {
+    width: 700px;
+    font-family: "Helvetica";
+    margin: 0 auto 0 auto;
+}
+
+a {
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+ul.link-list {
+    list-style-type: none;
+}
+
+ul.link-list li {
+    margin-bottom: 1em;
+}
+
+ul.link-list p {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+p.link-title {
+    font-weight: bold;
+}
+
+p.link-title span.host {
+    font-size: 0.8em;
+    color: gray;
+    margin-left: 1em;
+    font-style: italic;
+    font-weight: normal;
+}
+
+p.link-description {
+    font-size: 0.8em;
+    color: gray;
+}
+
+p.pages {
+}
+
+p.pages a {
+    color: gray;
+    font-size: 0.8em;
+}
+
+p.pages span {
+    margin-left: 2.5em;
+}
