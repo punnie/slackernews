@@ -1,6 +1,10 @@
 (ns slackernews.scrapper
   (:require [slackernews.db :as db]
-            [slackernews.slack :as slack]))
+            [slackernews.slack :as slack]
+            [clj-http.client :as http]
+            [net.cgrand.enlive-html :as html]))
+
+(def scrapped-channels ["meaningful" "list" "of" "channels"])
 
 (defn fetch-users []
   (pmap db/insert-user (-> (slack/get-users) :members)))
@@ -11,10 +15,12 @@
 (defn fetch-groups []
   (pmap db/insert-channel (-> (slack/get-groups) :groups)))
 
-(defn fetch-messages [slack-fn id & {:keys [retrieve-count] :or {retrieve-count 100}}]
+(defn fetch-messages [slack-fn id & {:keys [retrieve-count oldest]
+                                     :or {retrieve-count 100 oldest 0}}]
   (loop [latest nil]
     (let [response      (slack-fn id
                                   :latest latest
+                                  :oldest oldest
                                   :retrieve-count retrieve-count)
           messages      (-> response :messages)
           has-more      (-> response :has_more)
@@ -30,3 +36,10 @@
 
 (def fetch-group-messages
   (partial fetch-messages slack/get-group-messages))
+
+(defn update-messages []
+  (for [channel-name scrapped-channels]
+    (let [channel-id             (-> (db/get-channel-by-name channel-name) :id)
+          last-message-timestamp (-> (db/get-last-message-from-channel channel-id) :ts)]
+      (fetch-channel-messages channel-id :oldest last-message-timestamp))))
+

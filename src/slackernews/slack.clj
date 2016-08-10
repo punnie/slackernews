@@ -35,7 +35,7 @@
            "&latest="
            latest
            "&oldest="
-           oldest
+           (format "%.6f" oldest)
            "&inclusive="
            inclusive
            "&count="
