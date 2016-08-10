@@ -23,8 +23,10 @@
    [:span.next-page [:a {:href (str "/?page=" (inc page))} "Next page >>"]]])
 
 (defn render-landing-page [req]
-  (let [page  (read-string (-> req :params (:page 0)))
-        links (filter #(contains? % :user) (db/get-links :page page))]
+  (let [page  (-> req :params (:page "0") read-string)
+        links (->> (db/get-links :page page)
+                   (filter #(contains? % :user))
+                   (filter #(not= (-> % :user) "USLACKBOT")))]
     (layout {:title "Slackernews - Talkdesk"}
             [:ul.link-list (for [link links]
                              (let [url     (-> link :attachments first :from_url)
