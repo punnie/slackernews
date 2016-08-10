@@ -16,6 +16,12 @@
       (r/get user-id)
       (r/run conn)))
 
+(defn get-user-by-name [user-name]
+  (-> (r/table "users")
+      (r/filter (r/fn [row]
+                  (r/eq user-name (r/get-field row :name))))
+      (r/run conn)))
+
 (defn insert-user [user]
   (-> (r/table "users")
       (r/insert user {:conflict :update :durability :hard})
