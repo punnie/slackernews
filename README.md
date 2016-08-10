@@ -37,8 +37,8 @@ This is because up until now this has been developed in a REPL driven style. So 
 1. Navigate to the `slackernews.core` namespace
 1. Use mount to start your database connection and your webserver by typing `(mount/start)`
 1. At this point you should be able to populate your database with data from slack by:
-    1. Using `slackernews.scrapper/update-users` to get users
-    1. Using `slackernews.scrapper/update-channels` to get users
+    1. Using `slackernews.scrapper/fetch-users` to get users
+    1. Using `slackernews.scrapper/fetch-channels` to get users
     1. Using `slackernews.scrapper/update-messages` to get and further synchronise messages
 1. Get coding (phew)
 
@@ -56,6 +56,7 @@ Along with an attempt to prioritisation:
 
 More into the future:
 
+1. Tests maybe
 1. Use slack's realtime APIs to update messages
 1. Pick up reactions to links and use it as a elaborate and convoluted ranking system
 1. Enable filtering in the web interface (by poster, channel or domain)
