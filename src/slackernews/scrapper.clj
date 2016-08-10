@@ -43,3 +43,9 @@
           last-message-timestamp (-> (db/get-last-message-from-channel channel-id) :ts)]
       (fetch-channel-messages channel-id :oldest last-message-timestamp))))
 
+(defn scrape-link [link]
+  (let [response (http/get link)
+        body (-> response :body)
+        page (html/html-resource (java.io.StringReader. body))]
+    {:title (-> (html/select page [:title]) first :content first)
+     :link link}))
