@@ -1,36 +1,68 @@
-# slack-archive
+# slackernews
 
-FIXME: description
+Slackernews is a link/news aggregator for slack that picks up links people share on one or several channels of your team. It then displays them in a way similar to HN or lobste.rs.
 
-## Installation
+This is good because:
 
-Download from http://example.com/FIXME.
+1. Lets you keep up with link sharing within your team without the need to troll on several channels
+1. Keeps a history of good shares
+1. Allows you to promote how awesome your team is by sharing their shares whithout the need to reveal your channels' history
 
-## Usage
+## Development notice
 
-FIXME: explanation
+This project is still on its infant stages, so functionality and documentation is scarce. Come back in a couple of months for a more finished product if your interest is just using it.
 
-    $ java -jar slack-archive-0.1.0-standalone.jar [args]
+## Running
 
-## Options
+At this point you'll certainly notice that the `-main` function looks like this:
 
-FIXME: listing of options this app accepts.
+```clojure
+(defn -main
+  "I don't do a whole lot ... yet."
+  [& args]
+  (println "Hello, World!"))
+```
 
-## Examples
+Which ultimately means that running this won't produce many results.
 
-...
+This is because up until now this has been developed in a REPL driven style. So to start your program you'll have to manually perform these steps:
 
-### Bugs
+1. Start a rethinkdb server using `docker-compose up -d` on your project's directory
+1. Access `http://$(docker-machine ip):8080` for your rethinkdb management interface
+1. Create a `slackernews` database, and inside it the tables `users`, `channels`, and `messages`
+1. Replace the `token` var in `src/slackernews/slack.clj` with your slack token
+1. Replace the `scrapped-channels` var in `src/slackernews/scrapper.clj` with a meaningful list of channels
+1. Make sure the values in `src/slackernews/db.clj` match the ones in the DB created by docker-compose
+1. Fire up a REPL session
+1. Navigate to the `slackernews.core` namespace
+1. Use mount to start your database connection and your webserver by typing `(mount/start)`
+1. At this point you should be able to populate your database with data from slack by:
+    1. Using `slackernews.scrapper/update-users` to get users
+    1. Using `slackernews.scrapper/update-channels` to get users
+    1. Using `slackernews.scrapper/update-messages` to get and further synchronise messages
+1. Get coding (phew)
 
-...
+## Future work
 
-### Any Other Sections
-### That You Think
-### Might be Useful
+Along with an attempt to prioritisation:
+
+1. Start using lein profiles
+1. Extract magic values from code into environment variables in lein profiles
+1. Code program startup in the `-main` function
+1. Periodically update the message list from slack
+1. Do our own unfurling of the URLs instead of relying on slack to do so, which brings a couple of problems:
+    1. We can't control the title/information of the link
+    1. Some links are not picked up by slack, which means they won't appear
+
+More into the future:
+
+1. Use slack's realtime APIs to update messages
+1. Pick up reactions to links and use it as a elaborate and convoluted ranking system
+1. Enable filtering in the web interface (by poster, channel or domain)
+1. Present links to the slack message on each link
 
 ## License
 
-Copyright © 2016 FIXME
+Copyright © 2016 Talkdesk for now
 
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
+Actual license will be determined at a later date.
