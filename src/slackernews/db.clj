@@ -34,10 +34,10 @@
       (r/run conn)
       first))
 
-(defn get-channel-by-name [name]
+(defn get-channel-by-name [channel-name]
   (-> (r/table "channels")
       (r/filter (r/fn [row]
-                  (r/eq name (r/get-field row :name))))
+                  (r/eq channel-name (r/get-field row :name))))
       (r/run conn)
       first))
 
