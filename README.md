@@ -62,6 +62,22 @@ More into the future:
 1. Enable filtering in the web interface (by poster, channel or domain)
 1. Present links to the slack message on each link
 
+## On contributing ideas
+
+Please do, like this:
+
+1. Open an issue with your concerns
+1. ???????
+1. Profit!
+
+## On contributing code
+
+Please do. You know the drill:
+
+1. Fork
+1. Work
+1. Make a PR out of it
+
 ## License
 
 Copyright © 2016 Talkdesk for now
