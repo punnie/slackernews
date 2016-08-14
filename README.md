@@ -12,30 +12,24 @@ This is good because:
 
 This project is still on its infant stages, so functionality and documentation is scarce. Come back in a couple of months for a more finished product if your interest is just using it.
 
-## Running
+## Running and developing
 
-At this point you'll certainly notice that the `-main` function looks like this:
+Create a `.lein-env` file in the project root containing the following:
 
 ```clojure
-(defn -main
-  "I don't do a whole lot ... yet."
-  [& args]
-  (println "Hello, World!"))
+{:env {:database-uri "rethinkdb://your.rethinkdb.host:12312/slackernews"
+       :scrapped-channels "list,of,meaningful,channels"
+       :slack-token "xoxp-your-slack-token-123123123"}}
 ```
 
-Which ultimately means that running this won't produce many results.
-
-This is because up until now this has been developed in a REPL driven style. So to start your program you'll have to manually perform these steps:
+The application doesn't yet scrape links from channels automatically. You'll have to do it yourself in a REPL session. To achieve that, you may do the following:
 
 1. Start a rethinkdb server using `docker-compose up -d` on your project's directory
 1. Access `http://$(docker-machine ip):8080` for your rethinkdb management interface
 1. Create a `slackernews` database, and inside it the tables `users`, `channels`, and `messages`
-1. Replace the `token` var in `src/slackernews/slack.clj` with your slack token
-1. Replace the `scrapped-channels` var in `src/slackernews/scrapper.clj` with a meaningful list of channels
-1. Make sure the values in `src/slackernews/db.clj` match the ones in the DB created by docker-compose
-1. Fire up a REPL session
+1. Fire up a REPL session using `lein repl`, or using your editor
 1. Navigate to the `slackernews.core` namespace
-1. Use mount to start your database connection and your webserver by typing `(mount/start)`
+1. Start the database connection and the HTTP server by typing `(start-app nil)`
 1. At this point you should be able to populate your database with data from slack by:
     1. Using `slackernews.scrapper/fetch-users` to get users
     1. Using `slackernews.scrapper/fetch-channels` to get users
@@ -46,9 +40,6 @@ This is because up until now this has been developed in a REPL driven style. So 
 
 Along with an attempt to prioritisation:
 
-1. Start using lein profiles
-1. Extract magic values from code into environment variables in lein profiles
-1. Code program startup in the `-main` function
 1. Periodically update the message list from slack
 1. Do our own unfurling of the URLs instead of relying on slack to do so, which brings a couple of problems:
     1. We can't control the title/information of the link
