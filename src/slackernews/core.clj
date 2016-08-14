@@ -4,7 +4,8 @@
             [slackernews.handler :as handler]
             [slackernews.scrapper :as scrapper]
             [clojure.tools.logging :as log]
-            [clojure.tools.cli :refer [parse-opts]])
+            [clojure.tools.cli :refer [parse-opts]]
+            [environ.core :refer [env]])
   (:gen-class))
 
 (mount/defstate http-server

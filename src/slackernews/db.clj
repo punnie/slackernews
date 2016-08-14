@@ -1,10 +1,21 @@
 (ns slackernews.db
   (:require [mount.core :refer [defstate]]
             [rethinkdb.query :as r]
-            [rethinkdb.core :as rc]))
+            [rethinkdb.core :as rc]
+            [environ.core :refer [env]]))
+
+(defn parse-rethinkdb-uri 
+  ; Parses an URI in the format rethinkdb://:auth@host:port/database
+  ; to a map to be passed on to the rethinkdb.query/connect function
+  [uri]
+  (let [uri (new java.net.URI uri)
+        host (.getHost uri)
+        port (if (= (.getPort uri) -1) 28015 (.getPort uri))
+        db (clojure.string/join (rest (.getPath uri)))]
+    {:host host :port port :db db}))
 
 (defstate conn
-  :start (r/connect :host "192.168.99.100" :port 28015 :db "slackernews")
+  :start (apply r/connect (apply concat (parse-rethinkdb-uri (env :database-uri))))
   :stop  (rc/close conn))
 
 (defn get-all-users []
