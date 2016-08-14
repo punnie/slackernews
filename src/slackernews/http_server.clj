@@ -1,10 +1,10 @@
-(ns slackernews.http
+(ns slackernews.http-server
   (:require [org.httpkit.server :as http-kit]
             [clojure.tools.logging :as log]))
 
 (defn start [{:keys [handler host port] :as opts}]
   (try
-    (log/info "Starting HTTP server at port :" port)
+    (log/info "Starting HTTP server on port" port)
     (http-kit/run-server handler (dissoc opts :handler :init))
     (catch Throwable t
       (log/error "Error launching HTTP server!")
