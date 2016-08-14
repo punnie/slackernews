@@ -12,7 +12,8 @@
                  [http-kit "2.1.18"]
                  [compojure "1.5.1"]
                  [javax.servlet/servlet-api "2.5"]
-                 [hiccup "1.0.5"]]
+                 [hiccup "1.0.5"]
+                 [org.clojure/tools.cli "0.3.5"]]
   :main ^:skip-aot slackernews.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
