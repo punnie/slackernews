@@ -1,8 +1,9 @@
 (ns slackernews.slack
   (:require [clj-http.client :as http]
-            [clojure.data.json :as json]))
+            [clojure.data.json :as json]
+            [environ.core :refer [env]]))
 
-(def token "changeme")
+(def token (env :slack-token))
 
 (defn get-users []
   (-> (str "https://slack.com/api/users.list?token=" token)
