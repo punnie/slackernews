@@ -55,7 +55,7 @@
       (r/run conn)
       first))
 
-(defn get-channel-by-name 
+(defn get-channel-by-name
   "Fetches a channel by its name"
   [channel-name]
   (-> (r/table "channels")
@@ -64,14 +64,14 @@
       (r/run conn)
       first))
 
-(defn insert-channel 
+(defn insert-channel
   "Inserts a channel into the database"
   [channel]
   (-> (r/table "channels")
       (r/insert channel {:conflict :update :durability :hard})
       (r/run conn)))
 
-(defn insert-message 
+(defn insert-message
   "Inserts a message into the database"
   [message]
   (let [message (-> message (assoc :ts (read-string (-> message :ts))))]
@@ -79,7 +79,7 @@
         (r/insert message {:conflict :update :durability :hard})
         (r/run conn))))
 
-(defn get-last-message-from-channel 
+(defn get-last-message-from-channel
   "Fetches the last message of the channel given by its id"
   [channel-id]
   (-> (r/table "messages")
@@ -90,7 +90,7 @@
       (r/run conn)
       first))
 
-(defn get-links 
+(defn get-links
   "Fetches all links detected by slack within messages"
   [& {:keys [page] :or {page 0}}]
   (let [per-page 25
@@ -106,7 +106,7 @@
         (r/limit per-page)
         (r/run conn))))
 
-(defn get-links-from-channel 
+(defn get-links-from-channel
   "Fetches all links in a given channel detected by slack"
   [channel-id]
   (-> (r/table "messages")
