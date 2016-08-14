@@ -3,6 +3,8 @@
             [rethinkdb.query :as r]
             [rethinkdb.core :as rc]))
 
+(defn parse-rethinkdb-uri [uri])
+
 (defstate conn
   :start (r/connect :host "192.168.99.100" :port 28015 :db "slackernews")
   :stop  (rc/close conn))

@@ -5,7 +5,9 @@
             [slackernews.handler :as handler]
             [slackernews.scrapper :as scrapper]
             [clojure.tools.logging :as log]
-            [clojure.tools.cli :refer [parse-opts]])
+            [clojure.tools.cli :refer [parse-opts]]
+            [cider.nrepl :refer (cider-nrepl-handler)]
+            [refactor-nrepl.middleware :refer (wrap-refactor)])
   (:gen-class))
 
 (mount/defstate ^{:on-reload :noop}
@@ -15,7 +17,7 @@
 
 (mount/defstate ^{:on-reload :noop}
   nrepl-server
-  :start (nrepl/start {:port 7070})
+  :start (nrepl/start {:port 7070 :handler (wrap-refactor cider-nrepl-handler)})
   :stop (nrepl/stop nrepl-server))
 
 (defn stop-app []
@@ -31,6 +33,5 @@
   (.addShutdownHook (Runtime/getRuntime) (Thread. stop-app)))
 
 (defn -main
-  "I don't do a whole lot ... yet."
   [& args]
   (start-app args))

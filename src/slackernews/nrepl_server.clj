@@ -1,6 +1,7 @@
 (ns slackernews.nrepl-server
   (:require [clojure.tools.nrepl.server :as nrepl]
-            [clojure.tools.logging :as log]))
+            [clojure.tools.logging :as log]
+            ))
 
 (defn start
   [{:keys [port bind transport-fn handler ack-port greeting-fn]}]
