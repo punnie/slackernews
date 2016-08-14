@@ -2,9 +2,10 @@
   (:require [slackernews.db :as db]
             [slackernews.slack :as slack]
             [clj-http.client :as http]
-            [net.cgrand.enlive-html :as html]))
+            [net.cgrand.enlive-html :as html]
+            [environ.core :refer [env]]))
 
-(def scrapped-channels ["meaningful" "list" "of" "channels"])
+(def scrapped-channels (clojure.string/split (env :scrapped-channels) #","))
 
 (defn fetch-users []
   (pmap db/insert-user (-> (slack/get-users) :members)))
