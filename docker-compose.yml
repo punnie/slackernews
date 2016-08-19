@@ -1,5 +1,17 @@
 rethinkdb:
   image: rethinkdb:2.3
+
+slackernews:
+  links:
+    - rethinkdb:rethinkdb.local
+  image: talkdesk/slackernews:latest
   ports:
-    - 8080:8080
-    - 28015:28015
+    - 80:3000
+  environment:
+    - DATABASE_URI=rethinkdb://rethinkdb.local/slackernews
+    - SCRAPPED_CHANNELS
+    - SLACK_TOKEN
+  command:
+    - java
+    - -jar
+    - slackernews-0.1.0-SNAPSHOT-standalone.jar
