@@ -1,24 +1,26 @@
 (ns slackernews.slack
   (:require [clj-http.client :as http]
             [clojure.data.json :as json]
-            [environ.core :refer [env]]))
+            [environ.core :refer [env]]
+            [mount.core :refer [defstate]]))
 
-(def token (env :slack-token))
+(defstate slack-token
+  :start (env :slack-token))
 
 (defn get-users []
-  (-> (str "https://slack.com/api/users.list?token=" token)
+  (-> (str "https://slack.com/api/users.list?token=" slack-token)
       http/get
       :body
       (json/read-str :key-fn keyword)))
 
 (defn get-channels []
-  (-> (str "https://slack.com/api/channels.list?token=" token)
+  (-> (str "https://slack.com/api/channels.list?token=" slack-token)
       http/get
       :body
       (json/read-str :key-fn keyword)))
 
 (defn get-groups []
-  (-> (str "https://slack.com/api/groups.list?token=" token)
+  (-> (str "https://slack.com/api/groups.list?token=" slack-token)
       http/get
       :body
       (json/read-str :key-fn keyword)))
@@ -30,7 +32,7 @@
                                                retrieve-count 100
                                                unreads 0}}]
   (-> (str "https://slack.com/api/channels.history?token="
-           token
+           slack-token
            "&channel="
            channel-id
            "&latest="
@@ -55,7 +57,7 @@
                                            retrieve-count 100
                                            unreads 0}}]
   (-> (str "https://slack.com/api/groups.history?token="
-           token
+           slack-token
            "&channel="
            group-id
            "&latest="

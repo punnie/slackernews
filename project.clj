@@ -13,6 +13,7 @@
                  [http-kit "2.1.18"]
                  [javax.servlet/servlet-api "2.5"]
                  [mount "0.1.10"]
+                 [org.clojure/core.async "0.2.385"]
                  [org.clojure/data.json "0.2.6"]
                  [org.clojure/tools.cli "0.3.5"]]
   :main ^:skip-aot slackernews.core

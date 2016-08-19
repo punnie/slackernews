@@ -3,9 +3,13 @@
             [slackernews.slack :as slack]
             [clj-http.client :as http]
             [net.cgrand.enlive-html :as html]
-            [environ.core :refer [env]]))
+            [environ.core :refer [env]]
+            [mount.core :refer [defstate]]
+            [clojure.core.async :refer [chan go-loop alt! timeout <! thread close!]]
+            [clojure.tools.logging :as log]))
 
-(def scrapped-channels (clojure.string/split (env :scrapped-channels) #","))
+(defstate scrapped-channels
+  :start (clojure.string/split (env :scrapped-channels) #","))
 
 (defn fetch-users []
   (pmap db/insert-user (-> (slack/get-users) :members)))
@@ -39,10 +43,24 @@
   (partial fetch-messages slack/get-group-messages))
 
 (defn update-messages []
-  (for [channel-name scrapped-channels]
+  (log/info "Channels to scrap:" scrapped-channels)
+  (doseq [channel-name scrapped-channels]
     (let [channel-id             (-> (db/get-channel-by-name channel-name) :id)
           last-message-timestamp (-> (db/get-last-message-from-channel channel-id) :ts)]
-      (fetch-channel-messages channel-id :oldest last-message-timestamp))))
+      (log/info "Updating channel" channel-name "...")
+      (fetch-channel-messages channel-id :oldest last-message-timestamp)))
+  (log/info "Update complete!"))
+
+(defn update-all []
+  (log/info "Synchrinising with slack...")
+  (log/info "Updating users...")
+  (fetch-users)
+  (log/info "Updating channels...")
+  (fetch-channels)
+  (log/info "Updating groups...")
+  (fetch-groups)
+  (log/info "Updating messages...")
+  (update-messages))
 
 (defn scrape-link [link]
   (let [response (http/get link)
@@ -50,3 +68,17 @@
         page (html/html-resource (java.io.StringReader. body))]
     {:title (-> (html/select page [:title]) first :content first)
      :link link}))
+
+(defn set-interval
+  [f time-in-ms]
+  (let [stop (chan)]
+    (go-loop []
+      (alt!
+        (timeout time-in-ms) (do (<! (thread (f)))
+                                 (recur))
+        stop :stop))
+    stop))
+
+(defstate scrapper-job
+  :start (set-interval update-all 300000)
+  :stop (close! scrapper-job))
