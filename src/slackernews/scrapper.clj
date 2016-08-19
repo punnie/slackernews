@@ -12,16 +12,16 @@
   :start (clojure.string/split (env :scrapped-channels) #","))
 
 (defn fetch-users []
-  (pmap db/insert-user (-> (slack/get-users) :members)))
+  (doall (pmap db/insert-user (-> (slack/get-users) :members))))
 
 (defn fetch-channels []
-  (pmap db/insert-channel (-> (slack/get-channels) :channels)))
+  (doall (pmap db/insert-channel (-> (slack/get-channels) :channels))))
 
 (defn fetch-groups []
-  (pmap db/insert-channel (-> (slack/get-groups) :groups)))
+  (doall (pmap db/insert-channel (-> (slack/get-groups) :groups))))
 
 (defn fetch-messages [slack-fn id & {:keys [retrieve-count oldest]
-                                     :or {retrieve-count 100 oldest 0}}]
+                                     :or {retrieve-count 100}}]
   (loop [latest nil]
     (let [response      (slack-fn id
                                   :latest latest
