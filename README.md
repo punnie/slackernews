@@ -22,55 +22,42 @@ Create a `.lein-env` file in the project root containing the following:
        :slack-token "xoxp-your-slack-token-123123123"}}
 ```
 
-The application doesn't yet scrape links from channels automatically. You'll have to do it yourself in a REPL session. To achieve that, you may do the following:
+You'll also need a RethinkDB server somewhere handy. Follow these steps:
 
 1. Start a rethinkdb server using `docker-compose up -d` on your project's directory
 1. Access `http://$(docker-machine ip):8080` for your rethinkdb management interface
 1. Create a `slackernews` database, and inside it the tables `users`, `channels`, and `messages`
-1. Fire up a REPL session using `lein repl`, or using your editor
-1. Navigate to the `slackernews.core` namespace
-1. Start the database connection and the HTTP server by typing `(start-app nil)`
-1. At this point you should be able to populate your database with data from slack by:
-    1. Using `slackernews.scrapper/fetch-users` to get users
-    1. Using `slackernews.scrapper/fetch-channels` to get users
-    1. Using `slackernews.scrapper/update-messages` to get and further synchronise messages
-1. Get coding (phew)
+1. Run by typing `lein run`, or fire up a REPL session using `lein repl` if you want to hack
+1. See the fireworks, or get hacking
 
-## Future work
+## Roadmap
 
-Along with an attempt to prioritisation:
+- [x] Extract magic values into environment variables
+- [x] Start using different profiles for different environments
+- [x] Make program run without hacking and thinkering
+- [x] Periodically update messages from slack, automatically
+- [ ] Unfurl/scrap URLs on our own, instead of relying on slack to do it for us
+- [ ] Blacklist certain domains or private pages (i.e. slack pages, private JIRA tickets)
+- [ ] Update messages and links by using the realtime interface with slack
+- [ ] Synchronise reactions and post them along with the links
+- [ ] Auto tag posts based on content type or domain (e.g. `type:video` for youtube.com)
+- [ ] Filtering on the web interface (by domain, by channel, by poster, by auto-generated tags)
+- [ ] Search by tags, domain or link title with full text support
+- [ ] RSS or Atom feed
+- [ ] Users and authentication
+- [ ] Admin interface to remove/moderate/tag links
+- [ ] Interface to suggest tags for links
 
-1. Periodically update the message list from slack
-1. Do our own unfurling of the URLs instead of relying on slack to do so, which brings a couple of problems:
-    1. We can't control the title/information of the link
-    1. Some links are not picked up by slack, which means they won't appear
-
-More into the future:
-
-1. Tests maybe
-1. Use slack's realtime APIs to update messages
-1. Pick up reactions to links and use it as a elaborate and convoluted ranking system
-1. Enable filtering in the web interface (by poster, channel or domain)
-1. Present links to the slack message on each link
-
-## On contributing ideas
-
-Please do, like this:
-
-1. Open an issue with your concerns
-1. ???????
-1. Profit!
+If you want to help out on the feature set, open some issues for existing or new items.
 
 ## On contributing code
 
 Please do. You know the drill:
 
-1. Fork
-1. Work
-1. Make a PR out of it
+1. Fork it
+1. Hack it
+1. PR it
 
 ## License
 
-Copyright © 2016 Talkdesk for now
-
-Actual license will be determined at a later date.
+TBA.
