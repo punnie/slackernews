@@ -17,7 +17,7 @@
                         :stopped)]
     (log/info component "stopped")))
 
-(defn start-app [args]
+(defn start-app [& args]
   (doseq [component (-> args
                         mount/start-with-args
                         :started)]
