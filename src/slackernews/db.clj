@@ -116,3 +116,20 @@
                    (r/eq channel-id (r/get-field row :channel))
                    (r/gt (r/count (r/get-field row :attachments)) 0))))
       (r/run conn)))
+
+(defn get-all-messages
+  []
+  (-> (r/table "messages")
+      (r/order-by {:index (r/desc :ts)})
+      (r/filter (r/fn [row]
+                  (-> ["bot_message"]
+                      (r/contains (r/get-field row :subtype))
+                      (r/default true))))
+      (r/run conn)))
+
+(defn insert-link
+  "Inserts a link into the database"
+  [link]
+  (-> (r/table "links")
+      (r/insert link {:conflict :update :durability :hard})
+      (r/run conn)))

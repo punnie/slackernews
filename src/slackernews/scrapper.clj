@@ -79,5 +79,87 @@
     stop))
 
 (defstate scrapper-job
-  :start (set-interval update-all 300000)
+  :start (set-interval update-all (read-string (env :scrapping-interval)))
   :stop (close! scrapper-job))
+
+(defn scrape-head-meta-tags [content]
+  (let [title (-> (html/select content [:head :title]) first :content first)
+        description (-> (html/select content [:head [:meta (html/attr= :name "description")]]) first :attrs :content)]
+    {:title title :description description}))
+
+(defn scrape-og-meta-tags [content]
+  (for [tag (html/select content [:head [:meta (html/attr-starts :property "og:")]])]
+    (let [tag-attrs (-> tag :attrs)
+          key (keyword (clojure.string/replace (:property tag-attrs) (re-pattern "og:") ""))
+          value (:content tag-attrs)]
+      {key value})))
+
+
+
+
+
+(defn fetch-link-content-type [link]
+  (try
+    (log/info "HEADing" link)
+    (-> link (http/head {:socket-timeout 1000 :conn-timeout 1000}) :headers (get "Content-Type"))
+    (catch Exception e nil)))
+
+(defn fetch-link-content [link]
+  (try
+    (log/info "GETting" link)
+    (-> link (http/get {:socket-timeout 1000 :conn-timeout 1000}))
+    (catch Exception e nil)))
+
+(defn scrape-link [link]
+  (when-let [response (fetch-link-content link)]
+    (let [body (-> response :body)
+          page (html/html-resource (java.io.StringReader. body))]
+      {:meta    (scrape-head-meta-tags page)
+       :og      (into {} (scrape-og-meta-tags page))
+       :url     link})))
+
+
+
+(defn extract-link-from-message [message]
+  (try
+    (re-find #"https?://[^>|]+" (:text message))
+    (catch java.lang.NullPointerException e nil)))
+
+(defn extract-user-from-message [message]
+  (try
+    (if (= (:subtype message) "bot_message")
+      (clojure.string/replace (:username message) #"@" "")
+      (:name (db/get-user-by-id (:user message))))
+    (catch Exception e nil)))
+
+(defn extract-channel-from-message [message]
+  (:name (db/get-channel-by-id (:channel message))))
+
+(defn extract-ts-from-message [message]
+  (-> message :ts))
+
+(defn filter-messages [message]
+  (when-let [link (extract-link-from-message message)]
+    (let [content-type (fetch-link-content-type link)]
+      (try
+        (clojure.string/starts-with? content-type "text/html")
+        (catch java.lang.NullPointerException e nil)))))
+
+(defn process-messages [message]
+  (log/info "***********")
+  (log/info message)
+  (log/info "***********")
+  (let [link    (scrape-link (extract-link-from-message message))
+        ts      (extract-ts-from-message message)
+        channel (extract-channel-from-message message)
+        user    (extract-user-from-message message)]
+    {:link      link
+     :ts        ts
+     :channel   channel
+     :user      user}))
+
+(defn pipeline-messages [messages]
+  (->> messages
+       (filter filter-messages)
+       (pmap process-messages)))
+
