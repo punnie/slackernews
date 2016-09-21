@@ -48,11 +48,10 @@
     (let [channel-id             (-> (db/get-channel-by-name channel-name) :id)
           last-message-timestamp (-> (db/get-last-message-from-channel channel-id) :ts)]
       (log/info "Updating channel" channel-name "...")
-      (fetch-channel-messages channel-id :oldest last-message-timestamp)))
-  (log/info "Update complete!"))
+      (fetch-channel-messages channel-id :oldest last-message-timestamp))))
 
 (defn update-all []
-  (log/info "Synchrinising with slack...")
+  (log/info "Updating with slack...")
   (log/info "Updating users...")
   (fetch-users)
   (log/info "Updating channels...")
