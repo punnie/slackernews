@@ -94,13 +94,9 @@
   [& {:keys [page] :or {page 0}}]
   (let [per-page 25
         skip (* page per-page)]
-    (-> (r/table "messages")
+    (-> (r/table "links")
         (r/order-by {:index (r/desc :ts)})
-        (r/filter (r/fn [row]
-                    (r/and
-                     (r/gt (r/count (r/get-field row :attachments)) 0)
-                     (r/match (r/get-field row :text) "<http.*>")
-                     (r/eq "message" (r/get-field row :type)))))
+        (r/has-fields "link")
         (r/skip skip)
         (r/limit per-page)
         (r/run conn))))

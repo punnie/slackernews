@@ -30,16 +30,14 @@
 
 (defn render-landing-page [req]
   (let [page  (-> req :params (:page "0") read-string)
-        links (->> (db/get-links :page page)
-                   (filter #(contains? % :user))
-                   (filter #(not= (-> % :user) "USLACKBOT")))]
+        links (db/get-links :page page)]
     (layout {:title "Slackernews - Talkdesk"}
             [:ul.link-list (for [link links]
-                             (let [url     (-> link :attachments first :from_url)
-                                   title   (-> link :attachments first (:fallback "Untitled"))
+                             (let [url     (-> link :link :url)
+                                   title   (-> link :link :meta :title)
                                    host    (-> (new java.net.URI url) .getHost)
-                                   user    (-> (db/get-user-by-id (-> link :user)) :name)
-                                   channel (-> (db/get-channel-by-id (-> link :channel)) :name)]
+                                   user    (-> link :user)
+                                   channel (-> link :channel)]
                                [:li
                                 [:p.link-title
                                  [:a {:href url} (h/h title)]
