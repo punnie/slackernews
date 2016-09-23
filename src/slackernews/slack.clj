@@ -31,45 +31,15 @@
                                                inclusive 0
                                                retrieve-count 100
                                                unreads 0}}]
-  (let [url (str "https://slack.com/api/channels.history?token="
-                 slack-token
-                 "&channel="
-                 channel-id
-                 "&latest="
-                 latest
-                 "&oldest="
-                 (when oldest (format "%.6f" oldest))
-                 "&inclusive="
-                 inclusive
-                 "&count="
-                 retrieve-count
-                 "&unreads="
-                 unreads)]
-    (-> url
-        http/get
-        :body
-        (json/read-str :key-fn keyword))))
-
-
-(defn get-group-messages [group-id & {:keys [latest oldest inclusive retrieve-count unreads]
-                                      :or {latest (quot (System/currentTimeMillis) 1000)
-                                           inclusive 0
-                                           retrieve-count 100
-                                           unreads 0}}]
-  (let [url (str "https://slack.com/api/groups.history?token="
-                 slack-token
-                 "&channel="
-                 group-id
-                 "&latest="
-                 latest
-                 "&oldest="
-                 (when oldest (format "%.6f" oldest))
-                 "&inclusive="
-                 inclusive
-                 "&count="
-                 retrieve-count
-                 "&unreads="
-                 unreads)]
+  (let [url (str "https://slack.com/api/channels.history?"
+                 "token=" slack-token
+                 "&channel=" channel-id
+                 "&latest=" latest
+                 "&oldest=" oldest
+                 "&inclusive=" inclusive
+                 "&count=" retrieve-count
+                 "&unreads=" unreads)]
+    (log/info "GETting" url)
     (-> url
         http/get
         :body
