@@ -74,10 +74,9 @@
 (defn insert-message
   "Inserts a message into the database"
   [message]
-  (let [message (-> message (assoc :ts (read-string (-> message :ts))))]
-    (-> (r/table "messages")
-        (r/insert message {:conflict :update :durability :hard})
-        (r/run conn))))
+  (-> (r/table "messages")
+      (r/insert message {:conflict :update :durability :hard})
+      (r/run conn)))
 
 (defn get-last-message-from-channel
   "Fetches the last message of the channel given by its id"

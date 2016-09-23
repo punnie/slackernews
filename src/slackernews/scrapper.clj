@@ -8,6 +8,8 @@
             [clojure.core.async :refer [chan go-loop alt! timeout <! thread close!]]
             [clojure.tools.logging :as log]))
 
+(def ua {"User-Agent" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/602.1.50 (KHTML, like Gecko) Version/10.0 Safari/602.1.50"})
+
 (defstate scrapped-channels
   :start (clojure.string/split (env :scrapped-channels) #","))
 
@@ -20,67 +22,18 @@
 (defn fetch-groups []
   (doall (pmap db/insert-channel (-> (slack/get-groups) :groups))))
 
-(defn fetch-messages [slack-fn id & {:keys [retrieve-count oldest]
-                                     :or {retrieve-count 100}}]
-  (loop [latest nil]
-    (let [response      (slack-fn id
-                                  :latest latest
-                                  :oldest oldest
-                                  :retrieve-count retrieve-count)
-          messages      (-> response :messages)
-          has-more      (-> response :has_more)
-          message-count (count messages)]
-      (when (> message-count 0)
-        (pmap #(let [message (-> % (assoc :channel id))]
-                 (db/insert-message message)) messages))
-      (when (= has-more true)
-        (recur (-> messages last :ts))))))
-
-(def fetch-channel-messages
-  (partial fetch-messages slack/get-channel-messages))
-
-(def fetch-group-messages
-  (partial fetch-messages slack/get-group-messages))
-
-(defn update-messages []
-  (log/info "Channels to scrap:" scrapped-channels)
-  (doseq [channel-name scrapped-channels]
-    (let [channel-id             (-> (db/get-channel-by-name channel-name) :id)
-          last-message-timestamp (-> (db/get-last-message-from-channel channel-id) :ts)]
-      (log/info "Updating channel" channel-name "...")
-      (fetch-channel-messages channel-id :oldest last-message-timestamp))))
-
-(defn update-all []
-  (log/info "Updating with slack...")
-  (log/info "Updating users...")
-  (fetch-users)
-  (log/info "Updating channels...")
-  (fetch-channels)
-  (log/info "Updating groups...")
-  (fetch-groups)
-  (log/info "Updating messages...")
-  (update-messages))
-
-(defn scrape-link [link]
-  (let [response (http/get link)
-        body (-> response :body)
-        page (html/html-resource (java.io.StringReader. body))]
-    {:title (-> (html/select page [:title]) first :content first)
-     :link link}))
-
-(defn set-interval
-  [f time-in-ms]
-  (let [stop (chan)]
-    (go-loop []
-      (alt!
-        (timeout time-in-ms) (do (<! (thread (f)))
-                                 (recur))
-        stop :stop))
-    stop))
-
-(defstate scrapper-job
-  :start (set-interval update-all (read-string (env :scrapping-interval)))
-  :stop (close! scrapper-job))
+(defn lazy-fetch-messages
+  ([channel-id]
+   (lazy-fetch-messages channel-id nil nil))
+  ([channel-id first-ts]
+   (lazy-fetch-messages channel-id first-ts nil))
+  ([channel-id first-ts last-ts]
+   (lazy-seq
+    (let [response (slack/get-channel-messages channel-id :latest last-ts :oldest first-ts)
+          messages (-> response :messages)]
+      (when (not-empty messages)
+        (concat messages
+                (lazy-fetch-messages channel-id first-ts (-> messages last :ts))))))))
 
 (defn scrape-head-meta-tags [content]
   (let [title (-> (html/select content [:head :title]) first :content first)
@@ -94,20 +47,16 @@
           value (:content tag-attrs)]
       {key value})))
 
-
-
-
-
 (defn fetch-link-content-type [link]
   (try
     (log/info "HEADing" link)
-    (-> link (http/head {:socket-timeout 1000 :conn-timeout 1000}) :headers (get "Content-Type"))
+    (-> link (http/head {:headers ua :socket-timeout 10000 :conn-timeout 10000}) :headers (get "Content-Type"))
     (catch Exception e nil)))
 
 (defn fetch-link-content [link]
   (try
     (log/info "GETting" link)
-    (-> link (http/get {:socket-timeout 1000 :conn-timeout 1000}))
+    (-> link (http/get {:headers ua :socket-timeout 10000 :conn-timeout 10000}))
     (catch Exception e nil)))
 
 (defn scrape-link [link]
@@ -117,8 +66,6 @@
       {:meta    (scrape-head-meta-tags page)
        :og      (into {} (scrape-og-meta-tags page))
        :url     link})))
-
-
 
 (defn extract-link-from-message [message]
   (try
@@ -145,21 +92,37 @@
         (clojure.string/starts-with? content-type "text/html")
         (catch java.lang.NullPointerException e nil)))))
 
-(defn process-messages [message]
-  (log/info "***********")
-  (log/info message)
-  (log/info "***********")
-  (let [link    (scrape-link (extract-link-from-message message))
+(defn process-messages [channel message]
+  (let [url     (extract-link-from-message message)
+        link    (scrape-link url)
         ts      (extract-ts-from-message message)
-        channel (extract-channel-from-message message)
         user    (extract-user-from-message message)]
     {:link      link
      :ts        ts
      :channel   channel
      :user      user}))
 
-(defn pipeline-messages [messages]
-  (->> messages
-       (filter filter-messages)
-       (pmap process-messages)))
+(defn update-all []
+  (fetch-users)
+  (fetch-channels)
+  (fetch-groups)
+  (doseq [channel-name scrapped-channels]
+    (let [channel-id             (-> (db/get-channel-by-name channel-name) :id)
+          last-message-timestamp (-> (db/get-last-message-from-channel channel-id) :ts)
+          messages               (lazy-fetch-messages channel-id last-message-timestamp)]
+      (dorun
+       (->> messages (filter filter-messages) (pmap (partial process-messages channel-name)) (pmap db/insert-link))))))
 
+(defn set-interval
+  [f time-in-ms]
+  (let [stop (chan)]
+    (go-loop []
+      (alt!
+        (timeout time-in-ms) (do (<! (thread (f)))
+                                 (recur))
+        stop :stop))
+    stop))
+
+(defstate scrapper-job
+  :start (set-interval update-all (read-string (env :scrapping-interval)))
+  :stop (close! scrapper-job))
