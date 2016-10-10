@@ -130,11 +130,11 @@
 (defn retrieve-uri
   "Retrieves a promise with a request to the provided uri"
   [link]
-  (let [options {:timeout 10000
+  (let [options {:timeout       10000
                  :max-redirects 25
-                 :user-agent user-agent
-                 :insecure? true
-                 :filter (http/max-body-filter (* 1024 10000))}]
+                 :user-agent    user-agent
+                 :insecure?     true
+                 :filter        (http/max-body-filter (* 1024 10000))}]
     (assoc link :link (http/get (-> link :uri) options))))
 
 (defn process-uri
@@ -164,6 +164,9 @@
             (map make-uri-unsafe)
             (map retrieve-uri)
             (pmap (partial process-uri channel-name)))))))
+
+
+
 
 (defn set-interval
   [f time-in-ms]
