@@ -25,9 +25,6 @@
 (defn fetch-channels []
   (doall (pmap db/insert-channel (-> (slack/get-channels) :channels))))
 
-(defn fetch-groups []
-  (doall (pmap db/insert-channel (-> (slack/get-groups) :groups))))
-
 (defn lazy-fetch-messages
   ([channel-id]
    (lazy-fetch-messages channel-id nil nil))
@@ -53,12 +50,6 @@
           value (:content tag-attrs)]
       {key value})))
 
-(defn fetch-link-content-type [link]
-  (try
-    (log/info "HEADing" link)
-    (-> link (http/head {:headers user-agent :socket-timeout 10000 :conn-timeout 10000}) :headers (get "Content-Type"))
-    (catch Exception e nil)))
-
 (defn fetch-link-content [link]
   (try
     (log/info "GETting" link)
@@ -73,11 +64,6 @@
        :og      (into {} (scrape-og-meta-tags page))
        :url     link})))
 
-(defn extract-link-from-message [message]
-  (try
-    (re-find #"https?://[^>|]+" (:text message))
-    (catch java.lang.NullPointerException e nil)))
-
 (defn extract-user-from-message [message]
   (try
     (if (= (:subtype message) "bot_message")
@@ -91,29 +77,28 @@
 (defn extract-ts-from-message [message]
   (-> message :ts))
 
-(defn filter-messages [message]
-  (when-let [link (extract-link-from-message message)]
-    (let [content-type (fetch-link-content-type link)]
-      (try
-        (clojure.string/starts-with? content-type "text/html")
-        (catch java.lang.NullPointerException e nil)))))
+(defn make-uri-unsafe
+  "Transform HTTPS to HTTP to overcome SNI limitations"
+  [uri]
+  (clojure.string/replace uri #"^\s*https" "http"))
 
-(defn process-messages [channel message]
-  (let [url     (extract-link-from-message message)
-        link    (scrape-link url)
-        ts      (extract-ts-from-message message)
-        user    (extract-user-from-message message)]
-    {:link      link
-     :ts        ts
-     :channel   channel
-     :user      user}))
+(defn retrieve-uri
+  "Retrieves a promise with a request to the provided uri"
+  [uri]
+  (let [options {:timeout       10000
+                 :max-redirects 25
+                 :user-agent    user-agent
+                 :insecure?     true
+                 :filter        (http/max-body-filter (* 1024 10000))}]
+    (http/get uri options)))
 
-(defn extract-uris
-  "Scans the message for a URI"
-  [link]
-  (assoc link :uri (try
-                     (re-find #"https?://[^>|`´]+" (-> link :text))
-                     (catch Exception e nil))))
+(defn process-uri
+  ""
+  [uri channel]
+  (let [{:keys [opts status headers body error] :as resp} @uri]
+    (if error
+      (log/info (-> opts :url) " error: " error)
+      (log/info (-> opts :url) " status: " status))))
 
 (defn not-blacklisted?
   "Checks if uri is in the blacklist"
@@ -122,51 +107,34 @@
        (map #(re-find % uri))
        (every? nil?)))
 
-(defn make-uri-unsafe
-  "Transform HTTPS to HTTP to overcome SNI limitations"
-  [link]
-  (assoc link :uri (clojure.string/replace (-> link :uri) #"^\s*https" "http")))
-
-(defn retrieve-uri
-  "Retrieves a promise with a request to the provided uri"
-  [link]
-  (let [options {:timeout       10000
-                 :max-redirects 25
-                 :user-agent    user-agent
-                 :insecure?     true
-                 :filter        (http/max-body-filter (* 1024 10000))}]
-    (assoc link :link (http/get (-> link :uri) options))))
-
-(defn process-uri
+(defn extract-and-filter-uri
   ""
-  [channel link]
-  (let [{:keys [opts status headers body error] :as resp} @(-> link :link)]
-    (if error
-      (log/info (-> opts :url) " error: " error)
-      (log/info (-> opts :url) " status: " status))))
+  [text]
+  (when-let [uri (try
+                   (re-find #"https?://[^>|`´]+" text)
+                   (catch java.lang.NullPointerException e nil))]
+    (when (not-blacklisted? uri)
+      uri)))
+
+(defn process-message
+  ""
+  [channel message]
+  (when-let [uri (extract-and-filter-uri (-> message :text))]
+    (-> uri
+        (make-uri-unsafe)
+        (retrieve-uri)
+        (process-uri channel))))
 
 (defn update-all
   "Force update of all slack's resources"
   []
   (fetch-users)
   (fetch-channels)
-  (fetch-groups)
   (doseq [channel-name scrapped-channels]
     (let [channel-id             (-> (db/get-channel-by-name channel-name) :id)
           last-message-timestamp (-> (db/get-last-message-from-channel channel-id) :ts)
           messages               (lazy-fetch-messages channel-id last-message-timestamp)]
-      (dorun
-       (->> messages
-            (map #(select-keys % [:ts :user :text]))
-            (map extract-uris)
-            (remove #(-> % :uri nil?))
-            (filter #(-> % :uri not-blacklisted?))
-            (map make-uri-unsafe)
-            (map retrieve-uri)
-            (pmap (partial process-uri channel-name)))))))
-
-
-
+      (dorun (pmap (partial process-message channel-name) messages)))))
 
 (defn set-interval
   [f time-in-ms]
