@@ -18,6 +18,46 @@
   :start (apply r/connect (apply concat (parse-rethinkdb-uri (env :database-uri))))
   :stop  (rc/close conn))
 
+(defn ensure-db
+  ""
+  [db-name]
+  (-> (r/branch (r/contains (r/db-list) db-name)
+                {:config_changes [] :dbs_created 0}
+                (r/db-create db-name))
+      (r/run conn)))
+
+(defn ensure-table
+  ""
+  [table-name]
+  (-> (r/branch (r/contains (r/table-list) table-name)
+                {:config_changes [] :tables_created 0}
+                (r/table-create table-name))
+      (r/run conn)))
+
+(defn ensure-index
+  ""
+  [table index-name]
+  (-> (r/branch (r/contains (r/index-list table) index-name)
+                {:created 0}
+                (r/index-create table index-name))
+      (r/run conn)))
+
+(defstate db-migration
+  :start (let [db (:db (parse-rethinkdb-uri (env :database-uri)))]
+           (ensure-db db)
+           (ensure-table "users")
+           (ensure-table "channels")
+           (ensure-table "messages")
+           (ensure-table "links")
+           (let [table (r/table "links")]
+             (ensure-index table "ts")
+             (ensure-index table "channel")
+             (ensure-index table "user"))
+           (let [table (r/table "messages")]
+             (ensure-index table "ts")
+             (ensure-index table "channel_id")
+             (ensure-index table "user_id"))))
+
 (defn get-all-users
   "Fetches all users from the database"
   []
