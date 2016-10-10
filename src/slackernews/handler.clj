@@ -34,7 +34,7 @@
     (layout {:title "Slackernews - Talkdesk"}
             [:ul.link-list (for [link links]
                              (let [url     (-> link :link :url)
-                                   title   (-> link :link :meta :title)
+                                   title   (or (-> link :link :meta :title) url)
                                    host    (-> (new java.net.URI url) .getHost)
                                    user    (-> link :user)
                                    channel (-> link :channel)]

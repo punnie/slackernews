@@ -1,17 +1,23 @@
 (ns slackernews.scrapper
   (:require [slackernews.db :as db]
             [slackernews.slack :as slack]
-            [clj-http.client :as http]
+            [org.httpkit.client :as http]
             [net.cgrand.enlive-html :as html]
             [environ.core :refer [env]]
             [mount.core :refer [defstate]]
             [clojure.core.async :refer [chan go-loop alt! timeout <! thread close!]]
             [clojure.tools.logging :as log]))
 
-(def ua {"User-Agent" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/602.1.50 (KHTML, like Gecko) Version/10.0 Safari/602.1.50"})
+(def user-agent
+  {"User-Agent" "facebookexternalhit/1.1"})
 
 (defstate scrapped-channels
   :start (clojure.string/split (env :scrapped-channels) #","))
+
+(defstate uri-blacklist
+  :start (seq '(#"talkdesk.slack.com"
+                #"talkdesk.atlassian.net"
+                #"s3.ethereal.io")))
 
 (defn fetch-users []
   (doall (pmap db/insert-user (-> (slack/get-users) :members))))
@@ -50,13 +56,13 @@
 (defn fetch-link-content-type [link]
   (try
     (log/info "HEADing" link)
-    (-> link (http/head {:headers ua :socket-timeout 10000 :conn-timeout 10000}) :headers (get "Content-Type"))
+    (-> link (http/head {:headers user-agent :socket-timeout 10000 :conn-timeout 10000}) :headers (get "Content-Type"))
     (catch Exception e nil)))
 
 (defn fetch-link-content [link]
   (try
     (log/info "GETting" link)
-    (-> link (http/get {:headers ua :socket-timeout 10000 :conn-timeout 10000}))
+    (-> link (http/get {:headers user-agent :socket-timeout 10000 :conn-timeout 10000}))
     (catch Exception e nil)))
 
 (defn scrape-link [link]
@@ -102,7 +108,46 @@
      :channel   channel
      :user      user}))
 
-(defn update-all []
+(defn extract-uris
+  "Scans the message for a URI"
+  [link]
+  (assoc link :uri (try
+                     (re-find #"https?://[^>|`´]+" (-> link :text))
+                     (catch Exception e nil))))
+
+(defn not-blacklisted?
+  "Checks if uri is in the blacklist"
+  [uri]
+  (->> uri-blacklist
+       (map #(re-find % uri))
+       (every? nil?)))
+
+(defn make-uri-unsafe
+  "Transform HTTPS to HTTP to overcome SNI limitations"
+  [link]
+  (assoc link :uri (clojure.string/replace (-> link :uri) #"^\s*https" "http")))
+
+(defn retrieve-uri
+  "Retrieves a promise with a request to the provided uri"
+  [link]
+  (let [options {:timeout 10000
+                 :max-redirects 25
+                 :user-agent user-agent
+                 :insecure? true
+                 :filter (http/max-body-filter (* 1024 10000))}]
+    (assoc link :link (http/get (-> link :uri) options))))
+
+(defn process-uri
+  ""
+  [channel link]
+  (let [{:keys [opts status headers body error] :as resp} @(-> link :link)]
+    (if error
+      (log/info (-> opts :url) " error: " error)
+      (log/info (-> opts :url) " status: " status))))
+
+(defn update-all
+  "Force update of all slack's resources"
+  []
   (fetch-users)
   (fetch-channels)
   (fetch-groups)
@@ -111,7 +156,14 @@
           last-message-timestamp (-> (db/get-last-message-from-channel channel-id) :ts)
           messages               (lazy-fetch-messages channel-id last-message-timestamp)]
       (dorun
-       (->> messages (filter filter-messages) (pmap (partial process-messages channel-name)) (pmap db/insert-link))))))
+       (->> messages
+            (map #(select-keys % [:ts :user :text]))
+            (map extract-uris)
+            (remove #(-> % :uri nil?))
+            (filter #(-> % :uri not-blacklisted?))
+            (map make-uri-unsafe)
+            (map retrieve-uri)
+            (pmap (partial process-uri channel-name)))))))
 
 (defn set-interval
   [f time-in-ms]

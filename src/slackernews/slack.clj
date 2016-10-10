@@ -1,5 +1,5 @@
 (ns slackernews.slack
-  (:require [clj-http.client :as http]
+  (:require [org.httpkit.client :as http]
             [clojure.data.json :as json]
             [environ.core :refer [env]]
             [mount.core :refer [defstate]]
@@ -8,21 +8,29 @@
 (defstate slack-token
   :start (env :slack-token))
 
+(defn http-sync-get
+  "Performs a synchronous get using http-kit"
+  [uri]
+  (let [{:keys [error] :as resp} @(http/get uri)]
+    (if error
+      (log/error "Failed, exception:" error)
+      resp)))
+
 (defn get-users []
   (-> (str "https://slack.com/api/users.list?token=" slack-token)
-      http/get
+      http-sync-get
       :body
       (json/read-str :key-fn keyword)))
 
 (defn get-channels []
   (-> (str "https://slack.com/api/channels.list?token=" slack-token)
-      http/get
+      http-sync-get
       :body
       (json/read-str :key-fn keyword)))
 
 (defn get-groups []
   (-> (str "https://slack.com/api/groups.list?token=" slack-token)
-      http/get
+      http-sync-get
       :body
       (json/read-str :key-fn keyword)))
 
@@ -41,6 +49,6 @@
                  "&unreads=" unreads)]
     (log/info "GETting" url)
     (-> url
-        http/get
+        http-sync-get
         :body
         (json/read-str :key-fn keyword))))
