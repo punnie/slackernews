@@ -52,11 +52,12 @@
            (let [table (r/table "links")]
              (ensure-index table "ts")
              (ensure-index table "channel")
-             (ensure-index table "user"))
+             (ensure-index table "user")
+             (ensure-index table "host"))
            (let [table (r/table "messages")]
              (ensure-index table "ts")
-             (ensure-index table "channel_id")
-             (ensure-index table "user_id"))))
+             (ensure-index table "channel")
+             (ensure-index table "user"))))
 
 (defn get-all-users
   "Fetches all users from the database"
