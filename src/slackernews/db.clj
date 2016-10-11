@@ -49,15 +49,15 @@
            (ensure-table "channels")
            (ensure-table "messages")
            (ensure-table "links")
-           (let [table (r/table "links")]
-             (ensure-index table "ts")
-             (ensure-index table "channel")
-             (ensure-index table "user")
-             (ensure-index table "host"))
-           (let [table (r/table "messages")]
-             (ensure-index table "ts")
-             (ensure-index table "channel")
-             (ensure-index table "user"))))
+           (let [t (r/table "links")]
+             (ensure-index t "ts")
+             (ensure-index t "channel")
+             (ensure-index t "user")
+             (ensure-index t "host"))
+           (let [t (r/table "messages")]
+             (ensure-index t "ts")
+             (ensure-index t "channel")
+             (ensure-index t "user"))))
 
 (defn get-all-users
   "Fetches all users from the database"
