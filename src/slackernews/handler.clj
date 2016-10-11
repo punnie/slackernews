@@ -33,9 +33,9 @@
         links (db/get-links :page page)]
     (layout {:title "Slackernews - Talkdesk"}
             [:ul.link-list (for [link links]
-                             (let [url     (-> link :link :url)
-                                   title   (or (-> link :link :meta :title) url)
-                                   host    (-> (new java.net.URI url) .getHost)
+                             (let [url     (-> link :url)
+                                   title   (or (-> link :meta :title) url)
+                                   host    (-> link :host)
                                    user    (-> link :user)
                                    channel (-> link :channel)]
                                [:li
