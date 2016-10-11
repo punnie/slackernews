@@ -1,24 +1,22 @@
 (ns slackernews.handler
-  (:require [ring.middleware.params :refer [wrap-params]]
+  (:require [aleph.http :as http]
+            [aleph.netty :as netty]
+            [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.keyword-params :refer [wrap-keyword-params]]
             [ring.middleware.session :refer [wrap-session]]
+            [ring.logger :refer [wrap-with-logger]]
             [compojure.core :refer [defroutes GET]]
             [compojure.route :refer [not-found resources]]
             [hiccup.core :as h]
             [hiccup.page :as hp]
-            [slackernews.db :as db]))
+            [slackernews.db :as db]
+            [clojure.tools.logging :as log]))
 
 (defn layout [options & body]
   (hp/html5 [:head
              (hp/include-css "/css/slackernews.css")
              [:title (:title options "Slackernews")]]
             [:body
-             [:div#ribbon
-              [:a {:href "https://github.com/talkdesk/slackernews"}
-               [:img {:style "position: absolute; top: 0; right: 0; border: 0;"
-                      :src "https://camo.githubusercontent.com/38ef81f8aca64bb9a64448d0d70f1308ef5341ab/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67"
-                      :alt "Fork me on GitHub"
-                      :data-canonical-src "https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"}]]]
              [:div#wrapper
               body]]))
 
@@ -31,7 +29,7 @@
 (defn render-landing-page [req]
   (let [page  (-> req :params (:page "0") read-string)
         links (db/get-links :page page)]
-    (layout {:title "Slackernews - Talkdesk"}
+    (layout {:title "Slackernews"}
             [:ul.link-list (for [link links]
                              (let [url     (-> link :url)
                                    title   (or (-> link :meta :title) url)
@@ -58,4 +56,22 @@
   (-> #'all-routes
       wrap-session
       wrap-keyword-params
-      wrap-params))
+      wrap-params
+      wrap-with-logger))
+
+(defn start-server
+  ""
+  [{:keys [handler host port] :as opts}]
+  (try
+    (log/info "Starting HTTP server on port" port)
+    (let [server (http/start-server handler {:port port})]
+      (future (netty/wait-for-close server))
+      server)
+    (catch Throwable t
+      (log/error t (str "server failed to start on port " port))
+      (throw t))))
+
+(defn stop-server
+  ""
+  [server]
+  (.close server))
