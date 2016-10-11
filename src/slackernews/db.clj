@@ -137,7 +137,6 @@
         skip (* page per-page)]
     (-> (r/table "links")
         (r/order-by {:index (r/desc :ts)})
-        (r/has-fields "link")
         (r/skip skip)
         (r/limit per-page)
         (r/run conn))))
