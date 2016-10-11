@@ -19,13 +19,18 @@
                 #"talkdesk.atlassian.net"
                 #"s3.ethereal.io")))
 
-(defn fetch-users []
+(defn fetch-users
+  "Fetches all users on slack"
+  []
   (doall (pmap db/insert-user (-> (slack/get-users) :members))))
 
-(defn fetch-channels []
+(defn fetch-channels
+  "Fetches all channels on slack"
+  []
   (doall (pmap db/insert-channel (-> (slack/get-channels) :channels))))
 
 (defn lazy-fetch-messages
+  "Creates a lazy sequence with all messages from one channel"
   ([channel-id]
    (lazy-fetch-messages channel-id nil nil))
   ([channel-id first-ts]
@@ -38,67 +43,52 @@
         (concat messages
                 (lazy-fetch-messages channel-id first-ts (-> messages last :ts))))))))
 
-(defn scrape-head-meta-tags [content]
-  (let [title (-> (html/select content [:head :title]) first :content first)
+(defn scrape-head-meta-tags
+  "Scrapes information from regular HTML meta tags"
+  [content]
+  (let [title       (-> (html/select content [:head :title]) first :content first)
         description (-> (html/select content [:head [:meta (html/attr= :name "description")]]) first :attrs :content)]
     {:title title :description description}))
 
-(defn scrape-og-meta-tags [content]
+(defn scrape-og-meta-tags
+  "Scrapes information from open graph meta tags"
+  [content]
   (for [tag (html/select content [:head [:meta (html/attr-starts :property "og:")]])]
     (let [tag-attrs (-> tag :attrs)
-          key (keyword (clojure.string/replace (:property tag-attrs) (re-pattern "og:") ""))
-          value (:content tag-attrs)]
+          key       (keyword (clojure.string/replace (:property tag-attrs) (re-pattern "og:") ""))
+          value     (:content tag-attrs)]
       {key value})))
 
-(defn fetch-link-content [link]
-  (try
-    (log/info "GETting" link)
-    (-> link (http/get {:headers user-agent :socket-timeout 10000 :conn-timeout 10000}))
-    (catch Exception e nil)))
-
-(defn scrape-link [link]
-  (when-let [response (fetch-link-content link)]
-    (let [body (-> response :body)
-          page (html/html-resource (java.io.StringReader. body))]
-      {:meta    (scrape-head-meta-tags page)
-       :og      (into {} (scrape-og-meta-tags page))
-       :url     link})))
-
-(defn extract-user-from-message [message]
-  (try
-    (if (= (:subtype message) "bot_message")
-      (clojure.string/replace (:username message) #"@" "")
-      (:name (db/get-user-by-id (:user message))))
-    (catch Exception e nil)))
-
-(defn extract-channel-from-message [message]
-  (:name (db/get-channel-by-id (:channel message))))
-
-(defn extract-ts-from-message [message]
-  (-> message :ts))
-
 (defn make-uri-unsafe
-  "Transform HTTPS to HTTP to overcome SNI limitations"
+  "Transform HTTPS to HTTP to try to overcome SNI limitations"
   [uri]
   (clojure.string/replace uri #"^\s*https" "http"))
 
 (defn retrieve-uri
-  "Retrieves a promise with a request to the provided uri"
+  "Retrieves a promise with a request to the provided URI"
   [uri]
   (let [options {:timeout       10000
                  :max-redirects 25
                  :user-agent    user-agent
                  :insecure?     true
+                 :keepalive     -1
                  :filter        (http/max-body-filter (* 1024 10000))}]
     (http/get uri options)))
 
 (defn process-uri
-  ""
-  [uri channel]
+  "Takes a HTTP request promise and returns information about the URI"
+  [uri]
   (let [{:keys [opts status headers body error] :as resp} @uri]
-    (if error
-      (log/info (-> opts :url) " error: " error)
-      (log/info (-> opts :url) " status: " status))))
+    (if (or error
+            (not (= (quot status 100) 2))
+            (nil? (:content-type headers))
+            (not (re-find #"text/html" (:content-type headers))))
+      (log/info (-> opts :url) " error: " error status (:content-type headers))
+      (let [page (html/html-resource (java.io.StringReader. body))]
+        {:meta    (into {} (scrape-head-meta-tags page))
+         :og      (into {} (scrape-og-meta-tags page))
+         :url     (-> opts :url)
+         :host    (-> (new java.net.URI (-> opts :url)) .getHost)}))))
 
 (defn not-blacklisted?
   "Checks if uri is in the blacklist"
@@ -116,14 +106,31 @@
     (when (not-blacklisted? uri)
       uri)))
 
+(defn extract-user
+  "Extracts a username from a message"
+  [message]
+  (try
+    (if (= (:subtype message) "bot_message")
+      (clojure.string/replace (:username message) #"@" "")
+      (:name (db/get-user-by-id (:user message))))
+    (catch Exception e nil)))
+
 (defn process-message
   ""
   [channel message]
-  (when-let [uri (extract-and-filter-uri (-> message :text))]
-    (-> uri
-        (make-uri-unsafe)
-        (retrieve-uri)
-        (process-uri channel))))
+  (do
+    (when-let [uri (extract-and-filter-uri (:text message))]
+      (let [user (extract-user message)
+            ts   (:ts message)]
+        (some-> uri
+          (make-uri-unsafe)
+          (retrieve-uri)
+          (process-uri)
+          (assoc :user user)
+          (assoc :channel channel)
+          (assoc :ts ts)
+          (db/insert-link))))
+    (db/insert-message (assoc message :channel (-> channel db/get-channel-by-name :id)))))
 
 (defn update-all
   "Force update of all slack's resources"
@@ -137,6 +144,7 @@
       (dorun (pmap (partial process-message channel-name) messages)))))
 
 (defn set-interval
+  "Set periodic interval when a function is called"
   [f time-in-ms]
   (let [stop (chan)]
     (go-loop []
