@@ -1,15 +1,20 @@
 (ns slackernews.scrapper
   (:require [slackernews.db :as db]
             [slackernews.slack :as slack]
-            [org.httpkit.client :as http]
+            [aleph.http :as http]
+            [aleph.http.client-middleware :as middleware]
+            [byte-streams :as bs]
             [net.cgrand.enlive-html :as html]
             [environ.core :refer [env]]
             [mount.core :refer [defstate]]
             [clojure.core.async :refer [chan go-loop alt! timeout <! thread close!]]
             [clojure.tools.logging :as log]))
 
-(def user-agent
-  {"User-Agent" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/602.1.50 (KHTML, like Gecko) Version/10.0 Safari/602.1.50"})
+(def user-agent "" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/602.1.50 (KHTML, like Gecko) Version/10.0 Safari/602.1.50")
+
+(def pool (http/connection-pool {:middleware nil
+                                 :connection-timeout 5000
+                                 :request-timeout 5000}))
 
 (defstate scrapped-channels
   :start (clojure.string/split (env :scrapped-channels) #","))
@@ -17,7 +22,8 @@
 (defstate uri-blacklist
   :start (seq '(#"talkdesk.slack.com"
                 #"talkdesk.atlassian.net"
-                #"s3.ethereal.io")))
+                #"s3.ethereal.io"
+                #"talkdeskapp.com")))
 
 (defn fetch-users
   "Fetches all users on slack"
@@ -59,36 +65,33 @@
           value     (:content tag-attrs)]
       {key value})))
 
-(defn make-uri-unsafe
-  "Transform HTTPS to HTTP to try to overcome SNI limitations"
-  [uri]
-  (clojure.string/replace uri #"^\s*https" "http"))
-
 (defn retrieve-uri
   "Retrieves a promise with a request to the provided URI"
   [uri]
-  (let [options {:timeout       10000
-                 :max-redirects 25
-                 :user-agent    user-agent
-                 :insecure?     true
-                 :keepalive     -1
-                 :filter        (http/max-body-filter (* 1024 10000))}]
-    (http/get uri options)))
+  (let [headers   {:user-agent user-agent}
+        options   {:accept "text/html" :pool pool :throw-exceptions false :keep-alive false}
+        arguments (merge {:headers headers} options)]
+    {:uri uri :req (http/get uri arguments)}))
 
 (defn process-uri
-  "Takes a HTTP request promise and returns information about the URI"
-  [uri]
-  (let [{:keys [opts status headers body error] :as resp} @uri]
+  "Takes a HTTP request promise and returns information about the REQ"
+  [{:keys [uri req]}]
+  (let [{:keys [status
+                headers
+                body
+                error
+                trace-redirects] :as resp} @req
+        url                                (or (-> trace-redirects last) uri)]
     (if (or error
             (not (= (quot status 100) 2))
             (nil? (:content-type headers))
             (not (re-find #"text/html" (:content-type headers))))
-      (log/info (-> opts :url) " error: " error status (:content-type headers))
-      (let [page (html/html-resource (java.io.StringReader. body))]
+      (log/info url " error: " error status (:content-type headers))
+      (let [page (html/html-resource (bs/to-reader body))]
         {:meta    (into {} (scrape-head-meta-tags page))
          :og      (into {} (scrape-og-meta-tags page))
-         :url     (-> opts :url)
-         :host    (-> (new java.net.URI (-> opts :url)) .getHost)}))))
+         :url     url
+         :host    "none"}))))
 
 (defn not-blacklisted?
   "Checks if uri is in the blacklist"
@@ -123,7 +126,6 @@
       (let [user (extract-user message)
             ts   (:ts message)]
         (some-> uri
-          (make-uri-unsafe)
           (retrieve-uri)
           (process-uri)
           (assoc :user user)

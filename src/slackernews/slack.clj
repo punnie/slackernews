@@ -1,5 +1,6 @@
 (ns slackernews.slack
-  (:require [org.httpkit.client :as http]
+  (:require [aleph.http :as http]
+            [byte-streams :as bs]
             [clojure.data.json :as json]
             [environ.core :refer [env]]
             [mount.core :refer [defstate]]
@@ -8,30 +9,22 @@
 (defstate slack-token
   :start (env :slack-token))
 
-(defn http-sync-get
-  "Performs a synchronous get using http-kit"
-  [uri]
-  (let [{:keys [error] :as resp} @(http/get uri)]
-    (if error
-      (log/error "Failed, exception:" error)
-      resp)))
+(defn rtm-start []
+  (-> @(http/get (str "https://slack.com/api/rtm.start?token=" slack-token))
+      :body
+      bs/to-string
+      (json/read-str :key-fn keyword)))
 
 (defn get-users []
-  (-> (str "https://slack.com/api/users.list?token=" slack-token)
-      http-sync-get
+  (-> @(http/get (str "https://slack.com/api/users.list?token=" slack-token))
       :body
+      bs/to-string
       (json/read-str :key-fn keyword)))
 
 (defn get-channels []
-  (-> (str "https://slack.com/api/channels.list?token=" slack-token)
-      http-sync-get
+  (-> @(http/get (str "https://slack.com/api/channels.list?token=" slack-token))
       :body
-      (json/read-str :key-fn keyword)))
-
-(defn get-groups []
-  (-> (str "https://slack.com/api/groups.list?token=" slack-token)
-      http-sync-get
-      :body
+      bs/to-string
       (json/read-str :key-fn keyword)))
 
 (defn get-channel-messages [channel-id & {:keys [latest oldest inclusive retrieve-count unreads]
@@ -48,7 +41,7 @@
                  "&count=" retrieve-count
                  "&unreads=" unreads)]
     (log/info "GETting" url)
-    (-> url
-        http-sync-get
+    (-> @(http/get url)
         :body
+        bs/to-string
         (json/read-str :key-fn keyword))))
