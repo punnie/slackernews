@@ -1,4 +1,4 @@
-(ns slackernews.db
+(ns slackernews.db.core
   (:require [mount.core :refer [defstate]]
             [rethinkdb.query :as r]
             [rethinkdb.core :as rc]
@@ -45,15 +45,26 @@
 (defstate db-migration
   :start (let [db (:db (parse-rethinkdb-uri (env :database-uri)))]
            (ensure-db db)
+           (ensure-table "teams")
+           (let [t (r/table "teams")]
+             (ensure-index t "slack_id"))
+
            (ensure-table "users")
+           (let [t (r/table "users")]
+             (ensure-index t "slack_id"))
+
            (ensure-table "channels")
-           (ensure-table "messages")
+           (let [t (r/table "channels")]
+             (ensure-index t "slack_id"))
+
            (ensure-table "links")
            (let [t (r/table "links")]
              (ensure-index t "ts")
              (ensure-index t "channel")
              (ensure-index t "user")
              (ensure-index t "host"))
+
+           (ensure-table "messages")
            (let [t (r/table "messages")]
              (ensure-index t "ts")
              (ensure-index t "channel")

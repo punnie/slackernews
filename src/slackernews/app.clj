@@ -1,4 +1,4 @@
-(ns slackernews.handler
+(ns slackernews.app
   (:require [aleph.http :as http]
             [aleph.netty :as netty]
             [ring.middleware.params :refer [wrap-params]]
@@ -9,7 +9,7 @@
             [compojure.route :refer [not-found resources]]
             [hiccup.core :as h]
             [hiccup.page :as hp]
-            [slackernews.db :as db]
+            [slackernews.db.core :as db]
             [clojure.tools.logging :as log]))
 
 (defn layout [options & body]
@@ -52,7 +52,7 @@
   (resources "/")
   (not-found (not-found-page)))
 
-(defn app []
+(defn handler []
   (-> #'all-routes
       wrap-session
       wrap-keyword-params

@@ -1,20 +1,52 @@
-rethinkdb:
-  image: rethinkdb:2.3
-  ports:
-    - 8080:8080
-    - 28015:28015
+version: '2'
 
-slackernews:
-  links:
-    - rethinkdb:rethinkdb.local
-  image: talkdesk/slackernews:latest
-  ports:
-    - 80:3000
-  environment:
-    - DATABASE_URI=rethinkdb://rethinkdb.local/slackernews
-    - SCRAPPED_CHANNELS
-    - SLACK_TOKEN
-  command:
-    - java
-    - -jar
-    - slackernews-0.1.0-SNAPSHOT-standalone.jar
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile-production
+    image: slackernews:latest
+
+  repl:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - rethinkdb
+    environment:
+      - DATABASE_URI=rethinkdb://rethinkdb.dev/slackernews
+    command:
+      - lein
+      - repl
+      - :headless
+      - :host
+      - "0.0.0.0"
+      - :port
+      - "7002"
+    ports:
+      - 7002:7002
+    volumes:
+      - .:/usr/src/app
+
+  slackernews:
+    extends:
+      service: app
+    depends_on:
+      - rethinkdb
+    environment:
+      - DATABASE_URI=rethinkdb://rethinkdb.dev/slackernews
+    command:
+      - java
+      - -jar
+      - slackernews-0.1.0-SNAPSHOT-standalone.jar
+
+  rethinkdb:
+    image: rethinkdb:2.3
+    networks:
+      default:
+        aliases:
+          - rethinkdb.dev
+
+networks:
+  default:
+    
