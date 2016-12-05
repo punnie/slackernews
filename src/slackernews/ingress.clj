@@ -31,9 +31,7 @@
     (if-not (>! out {:type "ping"
                      :id id
                      :time (System/currentTimeMillis)})
-      (>! in {:time (System/currentTimeMillis)
-              :type "error"
-              :message "disconnected"})
+      (>! in {:type "goodbye"})
       (recur (inc id)))))
 
 (defn slack-connect
