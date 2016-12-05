@@ -31,7 +31,7 @@
   ""
   [{:keys [team out-stream in-stream] :as context}]
   (go-loop []
-    (when-let [{:keys [time type subtype] :as slack-event} (<! in-stream)]
+    (when-let [{:keys [type] :as slack-event} (<! in-stream)]
       (if-let [fun (ns-resolve (find-ns 'slackernews.reactor) (symbol type))]
         (apply fun context slack-event)
         (log/info "Unimplemented event:" slack-event))
