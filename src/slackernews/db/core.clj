@@ -2,7 +2,8 @@
   (:require [mount.core :refer [defstate]]
             [rethinkdb.query :as r]
             [rethinkdb.core :as rc]
-            [environ.core :refer [env]]))
+            [environ.core :refer [env]]
+            [clojure.tools.logging :as log]))
 
 (defn parse-rethinkdb-uri
   "Parses an URI in the format rethinkdb://:auth@host:port/database
@@ -51,24 +52,110 @@
 
            (ensure-table "users")
            (let [t (r/table "users")]
-             (ensure-index t "slack_id"))
+             (ensure-index t "slack_id")
+             (ensure-index t "team_id"))
 
            (ensure-table "channels")
            (let [t (r/table "channels")]
-             (ensure-index t "slack_id"))
+             (ensure-index t "slack_id")
+             (ensure-index t "team_id"))
 
            (ensure-table "links")
            (let [t (r/table "links")]
              (ensure-index t "ts")
              (ensure-index t "channel")
              (ensure-index t "user")
-             (ensure-index t "host"))
+             (ensure-index t "host")
+             (ensure-index t "team_id"))
 
            (ensure-table "messages")
            (let [t (r/table "messages")]
              (ensure-index t "ts")
-             (ensure-index t "channel")
-             (ensure-index t "user"))))
+             (ensure-index t "channel_id")
+             (ensure-index t "user_id"))))
+
+(defn get-team
+  ""
+  []
+  (-> (r/table "teams")
+      (r/run conn)
+      first))
+
+(defn update-team
+  ""
+  [team slack-data]
+  (when-let [id (:id team)]
+    (let [attributes (merge (:slack team) slack-data)]
+      (-> (r/table "teams")
+          (r/get id)
+          (r/update {:slack attributes})
+          (r/run conn)))))
+
+(defn upsert-user
+  ""
+  [team slack-data]
+  (if-let [user (-> (r/table "users")
+                    (r/get-all [(:id slack-data)] {:index "slack_id"})
+                    (r/run conn)
+                    first)]
+    (let [id         (:id user)
+          attributes (merge (:slack user) slack-data)]
+      (log/info "Updating user" (:id slack-data) "->" id)
+      (-> (r/table "users")
+          (r/get id)
+          (r/update {:slack attributes})
+          (r/run conn)))
+    (let [team_id (:id team)]
+      (log/info "Creating new user" (:id slack-data))
+      (-> (r/table "users")
+          (r/insert {:team_id team_id :slack slack-data})
+          (r/run conn)))))
+
+(defn upsert-channel
+  ""
+  [team slack-data]
+  (if-let [channel (-> (r/table "channels")
+                       (r/get-all [(:id slack-data)] {:index "slack_id"})
+                       (r/run conn)
+                       first)]
+    (let [id         (:id channel)
+          attributes (merge (:slack channel) slack-data)]
+      (log/info "Updating channel" (:id slack-data) "->" id)
+      (-> (r/table "channels")
+          (r/get id)
+          (r/update {:slack attributes})
+          (r/run conn)))
+    (let [team_id (:id team)]
+      (log/info "Creating new channel" (:id slack-data))
+      (-> (r/table "channels")
+          (r/insert {:team_id team_id :slack slack-data})
+          (r/run conn)))))
+
+(defn update-user-presence
+  ""
+  [slack-id presence-info]
+  (when-let [user (-> (r/table "users")
+                      (r/get-all [slack-id] {:index "slack_id"})
+                      (r/run conn)
+                      first)]
+    (let [id (:id user)]
+      (-> (r/table "users")
+          (r/get id)
+          (r/update {:slack {:presence presence-info}})
+          (r/run conn)))))
+
+(defn update-user
+  ""
+  [slack-id user-info]
+  (when-let [user (-> (r/table "users")
+                      (r/get-all [slack-id] {:index "slack_id"})
+                      (r/run conn)
+                      first)]
+    (let [id (:id user)]
+      (-> (r/table "users")
+          (r/get id)
+          (r/update {:slack user-info})
+          (r/run conn)))))
 
 (defn get-all-users
   "Fetches all users from the database"
