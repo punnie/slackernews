@@ -10,10 +10,11 @@
 (defn slack-request
   ""
   [connection endpoint & [params]]
+  (log/info params)
   (let [slack-api-base-url (:url connection)
         slack-token        (:token connection)
         slack-url          (str slack-api-base-url endpoint)
-        slack-params       (merge {:token slack-token} params)]
+        slack-params       (merge {:token slack-token} (into {} params))]
     (-> (http/get slack-url {:query-params slack-params})
         :body
         (json/read-str :key-fn keyword))))

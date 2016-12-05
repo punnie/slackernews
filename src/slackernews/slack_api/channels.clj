@@ -11,16 +11,16 @@
   [connection & params]
   (slack-request connection "channels.history" params))
 
-(defn messages-seq
+(defn history->lazy-seq
   "Creates a lazy sequence with all messages from one channel"
-  ([channel-id]
-   (messages-seq channel-id nil nil))
-  ([channel-id first-ts]
-   (messages-seq channel-id first-ts nil))
-  ([channel-id first-ts last-ts]
+  ([connection channel-id]
+   (history->lazy-seq connection channel-id nil nil))
+  ([connection channel-id oldest-ts]
+   (history->lazy-seq connection channel-id oldest-ts nil))
+  ([connection channel-id oldest-ts latest-ts]
    (lazy-seq
-    (let [response (history {:channel channel-id :latest last-ts :oldest first-ts})
+    (let [response (history connection {:channel channel-id :latest latest-ts :oldest oldest-ts})
           messages (-> response :messages)]
       (when (not-empty messages)
         (concat messages
-                (messages-seq channel-id first-ts (-> messages last :ts))))))))
+                (history->lazy-seq connection channel-id oldest-ts (-> messages last :ts))))))))
