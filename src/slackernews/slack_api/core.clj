@@ -10,7 +10,7 @@
 (defn slack-request
   ""
   [connection endpoint & [params]]
-  (log/info params)
+  (log/debug params)
   (let [slack-api-base-url (:url connection)
         slack-token        (:token connection)
         slack-url          (str slack-api-base-url endpoint)
