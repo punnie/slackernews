@@ -1,6 +1,26 @@
 (ns slackernews.reactor
   (:require [clojure.tools.logging :as log]))
 
+; (condp = type
+;         "hello"           (let [timestamp (System/currentTimeMillis)]
+;                             (log/info "Connected to slack at" timestamp))
+;         "pong"            (let [timestamp (System/currentTimeMillis)]
+;                             (log/info "Last pong received at" timestamp))
+;         "user_change"     (let [user          (:user slack-event)
+;                                 user-slack-id (:id user)]
+;                             (log/info "Updating user information for user" user-slack-id)
+;                             (db/update-user user-slack-id user))
+;         "presence_change" (let [presence      (:presence slack-event)
+;                                 user-slack-id (:user slack-event)]
+;                             (log/info "Updating user presence for user" user-slack-id)
+;                             (db/update-user-presence user-slack-id presence))
+;         "channel_created" (let [channel          (:channel slack-event)
+;                                 channel-slack-id (:id channel)]
+;                             (log/info "Creating new channel" channel-slack-id)
+;                             (db/create-channel channel))
+;         (log/info slack-event))
+
+
 ; (defn accounts_changed
 ;   ""
 ;   [])
