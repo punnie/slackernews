@@ -1,5 +1,7 @@
 (ns slackernews.reactor
-  (:require [clojure.tools.logging :as log]))
+  (:require [clojure.tools.logging :as log]
+            [slackernews.db.core :as db]
+            [slackernews.processor :as processor]))
 
 ; (condp = type
 ;         "hello"           (let [timestamp (System/currentTimeMillis)]
@@ -10,10 +12,6 @@
 ;                                 user-slack-id (:id user)]
 ;                             (log/info "Updating user information for user" user-slack-id)
 ;                             (db/update-user user-slack-id user))
-;         "presence_change" (let [presence      (:presence slack-event)
-;                                 user-slack-id (:user slack-event)]
-;                             (log/info "Updating user presence for user" user-slack-id)
-;                             (db/update-user-presence user-slack-id presence))
 ;         "channel_created" (let [channel          (:channel slack-event)
 ;                                 channel-slack-id (:id channel)]
 ;                             (log/info "Creating new channel" channel-slack-id)
@@ -168,7 +166,7 @@
 (defn hello
   ""
   [{:keys [team]} _]
-  (log/info "Connected to slack team" (-> team :slack :domain)))
+  (log/info "Connected to slack team" (-> team :domain)))
 
 ; (defn im_close
 ;   ""
@@ -194,9 +192,10 @@
 ;   ""
 ;   [])
 
-; (defn message
-;   ""
-;   [])
+(defn message
+  ""
+  [{:keys [team]} message-event]
+  (processor/process-message team message-event))
 
 ; (defn pin_added
 ;   ""
@@ -212,13 +211,11 @@
   (let [time (System/currentTimeMillis)]
     (log/info "Received ping at" time)))
 
-; (defn pref_change
-;   ""
-;   [])
-
-; (defn presence_change
-;   ""
-;   [])
+(defn presence_change
+  ""
+  [_ {:keys [presence user]}]
+  (log/info "Updating presence for user" user "as being" presence)
+  (db/update-user user {:presence presence}))
 
 ; (defn reaction_added
 ;   ""
