@@ -12,9 +12,9 @@ services:
       context: .
       dockerfile: Dockerfile
     depends_on:
-      - rethinkdb
+      - mongodb
     environment:
-      - DATABASE_URI=rethinkdb://rethinkdb.dev/slackernews
+      - DATABASE_URI=mongodb://mongodb.dev/slackernews
     command:
       - lein
       - repl
@@ -32,20 +32,20 @@ services:
     extends:
       service: app
     depends_on:
-      - rethinkdb
+      - mongodb
     environment:
-      - DATABASE_URI=rethinkdb://rethinkdb.dev/slackernews
+      - DATABASE_URI=mongodb://mongodb.dev/slackernews
     command:
       - java
       - -jar
       - slackernews-0.1.0-SNAPSHOT-standalone.jar
 
-  rethinkdb:
-    image: rethinkdb:2.3
+  mongodb:
+    image: mongo:3.4
     networks:
       default:
         aliases:
-          - rethinkdb.dev
+          - mongodb.dev
 
 networks:
   default:

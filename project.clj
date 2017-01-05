@@ -5,9 +5,9 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [aleph "0.4.2-alpha8"]
-                 [com.apa512/rethinkdb "0.15.26"]
                  [clj-http "2.3.0"]
                  [compojure "1.5.1"]
+                 [com.novemberain/monger "3.1.0"]
                  [enlive "1.1.6"]
                  [environ "1.1.0"]
                  [hiccup "1.0.5"]
