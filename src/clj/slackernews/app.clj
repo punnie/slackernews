@@ -17,38 +17,14 @@
              (hp/include-css "/css/slackernews.css")
              [:title (:title options "Slackernews")]]
             [:body
-             [:div#wrapper
-              body]]))
-
-(defn render-pages [page]
-  [:p.pages
-   (when (> page 0)
-     [:span.prev-page [:a {:href (str "/?page=" (dec page))} "<< Previous page"]])
-   [:span.next-page [:a {:href (str "/?page=" (inc page))} "Next page >>"]]])
-
-(defn render-landing-page [req]
-  (let [page  (-> req :params (:page "0") read-string)
-        links (db/get-links :page page)]
-    (layout {:title "Slackernews"}
-            [:ul.link-list (for [link links]
-                             (let [url     (-> link :url)
-                                   title   (or (-> link :meta :title) url)
-                                   host    (-> link :host)
-                                   user    (-> link :user)
-                                   channel (-> link :channel)]
-                               [:li
-                                [:p.link-title
-                                 [:a {:href url} (h/h title)]
-                                 [:span.host host]]
-                                [:p.link-description
-                                 (str "via " user " at #" channel)]]))]
-            (render-pages page))))
+             [:div#app]
+             (hp/include-js "/js/app.js")]))
 
 (defn not-found-page []
   (h/html [:p "Page not found!"]))
 
 (defroutes all-routes
-  (GET "/" [] render-landing-page)
+  (GET "/" [] layout)
   (resources "/")
   (not-found (not-found-page)))
 

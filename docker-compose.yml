@@ -46,6 +46,8 @@ services:
       default:
         aliases:
           - mongodb.dev
+    volumes:
+      - ./data:/data/db
 
 networks:
   default:
