@@ -10,21 +10,32 @@
             [hiccup.core :as h]
             [hiccup.page :as hp]
             [slackernews.db.core :as db]
+            [clojure.data.json :as json]
             [clojure.tools.logging :as log]))
 
-(defn layout [options & body]
+(defn layout
+  ""
+  [req]
   (hp/html5 [:head
              (hp/include-css "/css/slackernews.css")
-             [:title (:title options "Slackernews")]]
+             [:title (:title "Slackernews")]]
             [:body
              [:div#app]
              (hp/include-js "/js/app.js")]))
 
-(defn not-found-page []
+(defn get-links
+  ""
+  [req]
+  (json/print-json (db/get-links :page 0)))
+
+(defn not-found-page
+  ""
+  []
   (h/html [:p "Page not found!"]))
 
 (defroutes all-routes
   (GET "/" [] layout)
+  (GET "/links.json" [] get-links)
   (resources "/")
   (not-found (not-found-page)))
 

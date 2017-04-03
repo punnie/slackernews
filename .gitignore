@@ -68,3 +68,10 @@ data/
 
 ### OSX ###
 .DS_Store
+
+# Profiles
+.lein-env
+profiles.clj
+
+# Docker compose
+docker-compose.override.yml
