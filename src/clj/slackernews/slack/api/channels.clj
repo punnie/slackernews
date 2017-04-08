@@ -1,5 +1,5 @@
-(ns slackernews.slack-api.channels
-  (:require [slackernews.slack-api.core :refer [slack-request]]))
+(ns slackernews.slack.api.channels
+  (:require [slackernews.slack.api.core :refer [slack-request]]))
 
 (defn list
   ""

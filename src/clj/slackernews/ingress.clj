@@ -1,5 +1,5 @@
 (ns slackernews.ingress
-  (:require [slackernews.slack-api.rtm :as rtm]
+  (:require [slackernews.slack.api.rtm :as rtm]
             [clojure.core.async :refer [chan
                                         close!
                                         go

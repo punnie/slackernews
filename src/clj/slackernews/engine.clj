@@ -3,7 +3,7 @@
             [slackernews.db.core :as db]
             [slackernews.processor :as processor]
             [slackernews.reactor :as reactor]
-            [slackernews.slack-api.channels :as channels]
+            [slackernews.slack.api.channels :as channels]
             [clojure.core.async :refer [go-loop
                                         thread
                                         <!]]

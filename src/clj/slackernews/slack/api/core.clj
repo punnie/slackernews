@@ -1,4 +1,4 @@
-(ns slackernews.slack-api.core
+(ns slackernews.slack.api.core
   (:require [clj-http.client :as http]
             [clojure.core.async :as a]
             [byte-streams :as bs]
