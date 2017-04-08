@@ -2,7 +2,6 @@
   (:require [slackernews.db.core :as db]
             [clojure.tools.logging :as log]))
 
-
 (defn get-links-from-text
   ""
   [text]
