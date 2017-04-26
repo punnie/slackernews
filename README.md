@@ -1,5 +1,7 @@
 # slackernews
 
+Build status: [![CircleCI](https://circleci.com/gh/punnie/slackernews/tree/master.svg?style=svg)](https://circleci.com/gh/punnie/slackernews/tree/master)
+
 Slackernews is a link/news aggregator for slack that picks up links people share on one or several channels of your team. It then displays them in a way similar to HN or lobste.rs.
 
 This is good because:
