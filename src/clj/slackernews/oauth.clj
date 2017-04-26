@@ -2,18 +2,13 @@
   (:require [clojure.tools.logging :as log]
             [environ.core :refer [env]]
             [mount.core :refer [defstate]]
+            [slackernews.config :as config]
             [slackernews.db.team :as tdb]
             [slackernews.db.user :as udb]
             [slackernews.models.team :as teams]
             [slackernews.models.user :as users]
             [slackernews.slack.api.auth :as auth]
             [slackernews.slack.api.oauth :as oauth]))
-
-(defstate client-id
-  :start (-> env :client-id))
-
-(defstate client-secret
-  :start (-> env :client-secret))
 
 (defn retrieve-user-details
   ""
@@ -44,7 +39,7 @@
 (defn request-access
   ""
   [code]
-  (let [response (oauth/access {:client_id client-id :client_secret client-secret :code code})]
+  (let [response (oauth/access {:client_id config/client-id :client_secret config/client-secret :code code})]
     (when (:ok response)
       response)))
 

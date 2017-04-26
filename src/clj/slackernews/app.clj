@@ -13,6 +13,7 @@
             [ring.middleware.session :refer [wrap-session]]
             [ring.middleware.session.cookie :refer [cookie-store]]
             [ring.util.response :refer [redirect response]]
+            [slackernews.config :as config]
             [slackernews.db.user :as udb]
             [slackernews.oauth :as oauth]))
 
@@ -65,7 +66,7 @@
   []
   (-> #'all-routes
       wrap-team-subdomain
-      (wrap-session {:store (cookie-store {:key "a 16-byte secret"})
+      (wrap-session {:store (cookie-store {:key (config/cookie-secret)})
                      :cookie-attrs {:max-age 3600}})
       wrap-keyword-params
       wrap-params
