@@ -49,6 +49,7 @@
                             {:builds
                              {:app
                               {:source-paths ["src/cljs" "env/dev/cljs"]
+                               :test-paths ["test/cljs"]
                                :compiler
                                {:main "slackernews-frontend.app"
                                 :asset-path "/js/out"
@@ -57,5 +58,6 @@
                                 :source-map true
                                 :optimizations :none
                                 :pretty-print true}}}}
-                            :source-paths ["src/clj"]}
+                            :source-paths ["src/clj"]
+                            :test-paths ["test/clj"]}
              :project/test {}})

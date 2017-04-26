@@ -1,63 +1,61 @@
 (ns slackernews.processor
-  (:require [slackernews.db.core :as db]
-            [clojure.tools.logging :as log]))
-
-(defn get-links-from-text
-  ""
-  [text]
-  (let [matcher (re-matcher #"https?://[^>|`´\"\n\r\s]+" text)]
-    (loop [match (re-find matcher)
-           result []]
-      (if-not match
-        result
-        (recur (re-find matcher)
-               (conj result match))))))
-
-(defn extract-links-from-message
-  ""
-  [team {:keys [text ts] :as message}]
-  (when text
-    (get-links-from-text text)))
-
-(defn store-link
-  ""
-  [team message link]
-  (let [user-id          (:user message)
-        channel-id       (:channel message)
-        user-name        (:name (db/get-user-by-id team user-id))
-        channel-name     (:name (db/get-channel-by-id team channel-id))
-        link-host        (.getHost (new java.net.URI link))
-        message-ts       (:ts message)
-        message-slack-id (:slack_id message)
-        link             {:url     link
-                          :channel channel-name
-                          :user    user-name
-                          :host    link-host}]
-    (db/insert-link team message link)))
-
-(defn process-links
-  ""
-  [team {:keys [ts] :as message}]
-  (doseq [link (extract-links-from-message team message)]
-    (log/info "Trying to store URL" link "for team" (:id team))
-    (store-link team message link)))
+  (:require [clojure.tools.logging :as log]
+            [slackernews.models.channel :as channels]
+            [slackernews.models.link :as links]
+            [slackernews.models.message :as messages]
+            [slackernews.models.team :as teams]
+            [slackernews.models.user :as users]
+            [slackernews.db.channel :as cdb]
+            [slackernews.db.link :as ldb]
+            [slackernews.db.message :as mdb]
+            [slackernews.db.user :as udb]))
 
 (defn store-message
   ""
-  [team message]
-  (db/insert-message team message))
+  [team channel message]
+  (mdb/insert-message (messages/build-message team channel message)))
+
+(defn store-link
+  ""
+  [team channel message link-info]
+  (let [channel-name (channels/get-name channel)]
+    (ldb/insert-link (links/build-link team message link-info))))
+
+(defn process-links
+  ""
+  [team channel message]
+  (doseq [url (messages/extract-urls-from-message team message)]
+    (let [channel-id   (channels/get-id channel)
+          channel-name (channels/get-name channel)
+          team-id      (teams/get-id team)
+          ts           (messages/get-ts message)
+          user         (udb/get-user-by-id team (messages/get-user-id message))
+          user-id      (users/get-id user)
+          user-name    (users/get-name user)
+          link-info    {:url url
+                        :user_id user-id
+                        :user_name user-name
+                        :channel_id channel-id
+                        :channel_name channel-name
+                        :ts ts
+                        :team_id team-id}]
+      (log/info user)
+      (store-link team channel message link-info))))
 
 (defn process-message
   ""
-  [team message]
-  (condp = (:subtype message)
-    "message_changed" (let [message (:message message)]
-                        (store-message team message))
-    (do
-      (process-links team message)
-      (store-message team message))))
+  [team channel message]
+  (do
+    (store-message team channel message)
+    (process-links team channel message)))
 
-(defn process-reaction
+(defn process-channel
   ""
-  []
-  )
+  [team slack-channel]
+  (cdb/upsert-channel (channels/build-channel team slack-channel)))
+
+(defn process-user
+  ""
+  [team slack-user]
+  (log/info team slack-user)
+  (udb/upsert-user (users/build-user team slack-user)))
