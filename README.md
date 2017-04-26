@@ -12,52 +12,43 @@ This is good because:
 
 This project is still on its infant stages, so functionality and documentation is scarce. Come back in a couple of months for a more finished product if your interest is just using it.
 
-## Running and developing
+## Installing, running and developing
 
-Create a `.lein-env` file in the project root containing the following:
-
-```clojure
-{:env {:database-uri "rethinkdb://your.rethinkdb.host:12312/slackernews"
-       :scrapped-channels "list,of,meaningful,channels"
-       :slack-token "xoxp-your-slack-token-123123123"}}
-```
-
-You'll also need a RethinkDB server somewhere handy. Follow these steps:
-
-1. Start a rethinkdb server using `docker-compose up -d` on your project's directory
-1. Access `http://$(docker-machine ip):8080` for your rethinkdb management interface
-1. Create a `slackernews` database, and inside it the tables `users`, `channels`, and `messages`
-1. Run by typing `lein run`, or fire up a REPL session using `lein repl` if you want to hack
-1. See the fireworks, or get hacking
+Not available at the moment.
 
 ## Roadmap
 
 - [x] Extract magic values into environment variables
 - [x] Start using different profiles for different environments
 - [x] Make program run without hacking and thinkering
-- [x] Periodically update messages from slack, automatically
+- [ ] Periodically update messages from slack, automatically
 - [ ] Unfurl/scrap URLs on our own, instead of relying on slack to do it for us
 - [ ] Blacklist certain domains or private pages (i.e. slack pages, private JIRA tickets)
-- [ ] Update messages and links by using the realtime interface with slack
-- [ ] Synchronise reactions and post them along with the links
 - [ ] Auto tag posts based on content type or domain (e.g. `type:video` for youtube.com)
 - [ ] Filtering on the web interface (by domain, by channel, by poster, by auto-generated tags)
 - [ ] Search by tags, domain or link title with full text support
 - [ ] RSS or Atom feed
+- [ ] Add to pocket buttons on every link
+- [ ] Synchronise reactions and post them along with the links
 - [ ] Users and authentication
 - [ ] Admin interface to remove/moderate/tag links
 - [ ] Interface to suggest tags for links
+- [ ] ~Update messages and links by using the realtime interface with slack~
 
 If you want to help out on the feature set, open some issues for existing or new items.
 
 ## On contributing code
 
-Please do. You know the drill:
+Everyone is welcomed to contribute code in any way they feel they should.
 
-1. Fork it
-1. Hack it
-1. PR it
+1. Fork the project
+1. Create a topic branch from master
+1. Make some commits to improve the project
+1. Push this branch to your GitHub project
+1. Open a Pull Request on this project's GitHub page
+1. Discuss, and optionally continue committing
+1. If accepted, it will be merged to master and subsequentlly deployed
 
 ## License
 
-TBA.
+Slackernews is licensed under the Eclipse Public License 1.0 (EPL). See the [LICENSE](https://github.com/punnie/slackernews/blob/master/LICENSE) file for details.
