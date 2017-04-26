@@ -12,6 +12,7 @@
   ""
   [slack-team-data]
   (let [access-token (:access_token slack-team-data)
+        domain       (:domain slack-team-data)
         scopes       (string/split (:scope slack-team-data) #",")
         team-id      (:team_id slack-team-data)
         team-name    (:team_name slack-team-data)
@@ -19,5 +20,6 @@
     {:access_token access-token
      :scopes scopes
      :team_id team-id
-     :team_name team-name
+     :name team-name
+     :domain domain
      :user_id user-id}))

@@ -66,7 +66,7 @@
   []
   (-> #'all-routes
       wrap-team-subdomain
-      (wrap-session {:store (cookie-store {:key (config/cookie-secret)})
+      (wrap-session {:store (cookie-store {:key config/cookie-secret})
                      :cookie-attrs {:max-age 3600}})
       wrap-keyword-params
       wrap-params

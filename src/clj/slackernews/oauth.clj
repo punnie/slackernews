@@ -8,49 +8,62 @@
             [slackernews.models.team :as teams]
             [slackernews.models.user :as users]
             [slackernews.slack.api.auth :as auth]
-            [slackernews.slack.api.oauth :as oauth]))
+            [slackernews.slack.api.oauth :as oauth]
+            [slackernews.slack.api.team :as steam]
+            [slackernews.slack.api.users :as susers]))
 
 (defn retrieve-user-details
   ""
-  [oauth-response]
-  (let [auth-test-response (:user oauth-response)
-        user-name          (:user auth-test-response)
-        user-id            (:user_id auth-test-response)
-        team-id            (:team_id auth-test-response)]
-    (udb/upsert-user (users/build-user {:team_id team-id} {:name user-name :id user-id}))
-    {:ok true }))
-
-(defn test-auth
-  ""
-  [oauth-response]
-  (let [token              (:access_token oauth-response)
-        connection         {:token token}
-        auth-test-response (auth/test connection)]
-    (when (:ok auth-test-response)
-      (merge oauth-response {:user auth-test-response}))))
+  [{:keys [ok oauth-response auth-test-response team] :as state}]
+  (log/info state)
+  (if ok
+    (let [token              (:access_token oauth-response)
+          connection         {:token token}
+          slack-user-info-response (susers/info connection {:user (:user_id auth-test-response)})]
+      (if (:ok slack-user-info-response)
+        (let [slack-user (:user slack-user-info-response)
+              user (users/build-user team slack-user)]
+          (udb/upsert-user user)
+          (merge state {:user user}))))
+    state))
 
 (defn retrieve-team-details
   ""
-  [oauth-response]
-  (do
-    (tdb/upsert-team (teams/build-team oauth-response))
-    oauth-response))
+  [{:keys [ok oauth-response auth-test-response] :as state}]
+  (log/info state)
+  (if ok
+    (let [token              (:access_token oauth-response)
+          connection         {:token token}
+          slack-team-info-response (steam/info connection)]
+      (if (:ok slack-team-info-response)
+        (let [slack-team (:team slack-team-info-response)
+              team (teams/build-team (merge oauth-response slack-team))]
+          (tdb/upsert-team team)
+          (merge state {:team team}))))
+    state))
+
+(defn test-auth
+  ""
+  [{:keys [ok oauth-response] :as state}]
+  (log/info state)
+  (if ok
+    (let [token              (:access_token oauth-response)
+          connection         {:token token}
+          auth-test-response (auth/test connection)]
+      (merge state {:ok (:ok auth-test-response) :error (:error auth-test-response) :auth-test-response auth-test-response}))
+    state))
 
 (defn request-access
   ""
   [code]
   (let [response (oauth/access {:client_id config/client-id :client_secret config/client-secret :code code})]
-    (when (:ok response)
-      response)))
+    {:ok (:ok response) :error (:error response) :oauth-response response}))
 
 (defn request-authorization
   ""
   [code]
-  (let [steps (some-> code
-                      (request-access)
-                      (retrieve-team-details)
-                      (test-auth)
-                      (retrieve-user-details))]
-    (if (nil? steps)
-      {:ok false}
-      steps)))
+  (-> code
+      (request-access)
+      (test-auth)
+      (retrieve-team-details)
+      (retrieve-user-details)))

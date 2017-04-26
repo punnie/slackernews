@@ -3,7 +3,7 @@
 (defn get-name
   ""
   [user]
-  (:user_name user))
+  (:name user))
 
 (defn get-id
   ""
@@ -12,5 +12,5 @@
 
 (defn build-user
   ""
-  [{:keys [team_id] :as team} {:keys [id name] :as user-data}]
-  {:user_name name :user_id id :team_id team_id})
+  [{:keys [team_id] :as team} {:keys [id name real_name] :as user-data}]
+  {:real_name real_name :name name :user_id id :team_id team_id})

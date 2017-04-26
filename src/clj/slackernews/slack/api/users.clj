@@ -5,3 +5,8 @@
   ""
   [connection & params]
   (slack-request connection "users.list" params))
+
+(defn info
+  ""
+  [connection & params]
+  (slack-request connection "users.info" params))
