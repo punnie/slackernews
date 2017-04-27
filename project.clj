@@ -4,10 +4,10 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [org.clojure/clojurescript "1.9.229"]
+                 [org.clojure/clojurescript "1.9.521"]
                  [aleph "0.4.3"]
                  [clj-http "3.5.0"]
-                 [compojure "1.5.1"]
+                 [compojure "1.5.2"]
                  [com.novemberain/monger "3.1.0"]
                  [enlive "1.1.6"]
                  [environ "1.1.0"]
@@ -16,15 +16,14 @@
                                                     javax.jms/jms
                                                     com.sun.jdmk/jmxtools
                                                     com.sun.jmx/jmxri]]
-                 [mount "0.1.10"]
-                 [org.clojure/core.async "0.2.385"]
+                 [mount "0.1.11"]
+                 [org.clojure/core.async "0.3.442"]
                  [org.clojure/data.json "0.2.6"]
                  [org.clojure/tools.cli "0.3.5"]
-                 [reagent "0.6.0"]
-                 [ring "1.5.0"]
-                 [ring-logger "0.7.6"]]
-  :plugins [[lein-cljsbuild "1.1.4"]
-            [jonase/eastwood "0.2.3"]]
+                 [reagent "0.6.1"]
+                 [ring "1.5.1"]
+                 [ring-logger "0.7.7"]]
+  :plugins [[lein-cljsbuild "1.1.4"]]
   :main ^:skip-aot slackernews.core
   :target-path "target/%s"
   :resource-paths ["resources" "target/cljsbuild"]
@@ -43,10 +42,12 @@
   :profiles {:uberjar      {:aot :all}
              :dev          [:profiles/dev :project/dev]
              :test         [:profiles/test :project/test]
-             :project/dev  {:dependencies [[binaryage/devtools "0.8.3"]
+             :project/dev  {:dependencies [[binaryage/devtools "0.9.4"]
                                            [com.cemerick/piggieback "0.2.2-SNAPSHOT"]]
                             :plugins [[lein-environ "1.1.0"]
-                                      [lein-figwheel "0.5.8"]]
+                                      [lein-figwheel "0.5.8"]
+                                      [lein-ancient "0.6.10"]
+                                      [jonase/eastwood "0.2.3"]]
                             :cljsbuild
                             {:builds
                              {:app
