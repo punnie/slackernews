@@ -1,8 +1,5 @@
 (ns slackernews.db.link
-  (:require [clojure.tools.logging :as log]
-            [clojure.string :as string]
-            [monger.collection :as mc]
-            [monger.query :as mq]
+  (:require [monger.collection :as mc]
             [slackernews.db.core :refer [db]]))
 
 (def collection "" "links")

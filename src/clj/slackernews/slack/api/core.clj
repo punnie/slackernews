@@ -1,10 +1,6 @@
 (ns slackernews.slack.api.core
   (:require [clj-http.client :as http]
-            [clojure.core.async :as a]
-            [byte-streams :as bs]
             [clojure.data.json :as json]
-            [environ.core :refer [env]]
-            [mount.core :refer [defstate]]
             [clojure.tools.logging :as log]))
 
 (def slack-api-url "Slack's API URL" "https://slack.com/api/")

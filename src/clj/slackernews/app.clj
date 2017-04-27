@@ -1,7 +1,6 @@
 (ns slackernews.app
   (:require [aleph.http :as http]
             [aleph.netty :as netty]
-            [clojure.data.json :as json]
             [clojure.tools.logging :as log]
             [compojure.core :refer [defroutes GET]]
             [compojure.route :refer [not-found resources]]
@@ -14,7 +13,6 @@
             [ring.middleware.session.cookie :refer [cookie-store]]
             [ring.util.response :refer [redirect response]]
             [slackernews.config :as config]
-            [slackernews.db.user :as udb]
             [slackernews.oauth :as oauth]))
 
 (defn front-page

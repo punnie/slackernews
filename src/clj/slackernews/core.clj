@@ -1,11 +1,7 @@
 (ns slackernews.core
   (:require [mount.core :as mount]
             [slackernews.app :as app]
-            [slackernews.oauth :as oauth]
-            [clojure.tools.logging :as log]
-            [clojure.tools.cli :refer [parse-opts]]
-            [environ.core :refer [env]]
-            [clojure.core.async :refer [<!! >!! alts!! chan close! go-loop timeout thread]])
+            [clojure.tools.logging :as log])
   (:gen-class))
 
 (mount/defstate http-server

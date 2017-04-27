@@ -1,7 +1,5 @@
 (ns slackernews.oauth
   (:require [clojure.tools.logging :as log]
-            [environ.core :refer [env]]
-            [mount.core :refer [defstate]]
             [slackernews.config :as config]
             [slackernews.db.team :as tdb]
             [slackernews.db.user :as udb]

@@ -29,7 +29,7 @@
 
 (defn extract-urls-from-message
   ""
-  [team {:keys [text ts] :as message}]
+  [{:keys [text]}]
   (when text
     (get-urls-from-text text)))
 

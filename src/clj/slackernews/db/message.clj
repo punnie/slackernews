@@ -1,7 +1,5 @@
 (ns slackernews.db.message
-  (:require [clojure.tools.logging :as log]
-            [clojure.string :as string]
-            [monger.collection :as mc]
+  (:require [monger.collection :as mc]
             [slackernews.db.core :refer [db]]))
 
 (def collection "" "messages")

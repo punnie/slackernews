@@ -18,13 +18,12 @@
 (defn store-link
   ""
   [team channel message link-info]
-  (let [channel-name (channels/get-name channel)]
-    (ldb/insert-link (links/build-link team message link-info))))
+  (ldb/insert-link (links/build-link team message link-info)))
 
 (defn process-links
   ""
   [team channel message]
-  (doseq [url (messages/extract-urls-from-message team message)]
+  (doseq [url (messages/extract-urls-from-message message)]
     (let [channel-id   (channels/get-id channel)
           channel-name (channels/get-name channel)
           team-id      (teams/get-id team)

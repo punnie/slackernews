@@ -23,10 +23,13 @@
                  [reagent "0.6.0"]
                  [ring "1.5.0"]
                  [ring-logger "0.7.6"]]
-  :plugins [[lein-cljsbuild "1.1.4"]]
+  :plugins [[lein-cljsbuild "1.1.4"]
+            [jonase/eastwood "0.2.3"]]
   :main ^:skip-aot slackernews.core
   :target-path "target/%s"
   :resource-paths ["resources" "target/cljsbuild"]
+  :source-paths ["src/clj"]
+  :test-paths ["test/clj"]
 
   :clean-targets ^{:protect false}
   [:target-path [:cljsbuild :builds :app :compiler :output-dir] [:cljsbuild :builds :app :compiler :output-to]]
@@ -56,7 +59,5 @@
                                 :output-dir "target/cljsbuild/public/js/out"
                                 :source-map true
                                 :optimizations :none
-                                :pretty-print true}}}}
-                            :source-paths ["src/clj"]
-                            :test-paths ["test/clj"]}
+                                :pretty-print true}}}}}
              :project/test {}})

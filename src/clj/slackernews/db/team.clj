@@ -1,6 +1,5 @@
 (ns slackernews.db.team
-  (:require [clojure.tools.logging :as log]
-            [monger.collection :as mc]
+  (:require [monger.collection :as mc]
             [monger.conversion :refer [from-db-object]]
             [monger.operators :refer [$set]]
             [slackernews.db.core :refer [db]]))

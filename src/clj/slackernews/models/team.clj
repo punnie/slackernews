@@ -1,7 +1,5 @@
 (ns slackernews.models.team
-  (:require [clojure.tools.logging :as log]
-            [clojure.string :as string]
-            [slackernews.db.team :as tdb]))
+  (:require [clojure.string :as string]))
 
 (defn get-id
   ""

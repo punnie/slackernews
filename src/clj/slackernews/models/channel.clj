@@ -12,7 +12,7 @@
 
 (defn build-channel
   ""
-  [team {:keys [id name_normalized creator purpose name topic] :as slack-channel}]
+  [team {:keys [id name_normalized creator purpose topic]}]
   (let [team_id (:team_id team)
         purpose (:value purpose)
         topic   (:value topic)]

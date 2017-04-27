@@ -1,6 +1,5 @@
 (ns slackernews.worker
-  (:require [clojure.tools.logging :as log]
-            [slackernews.processor :as processor]
+  (:require [slackernews.processor :as processor]
             [slackernews.slack.api.channels :as channels]
             [slackernews.slack.api.users :as users]
             [slackernews.db.channel :as cdb]))
