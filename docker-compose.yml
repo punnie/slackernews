@@ -1,45 +1,6 @@
 version: '2'
 
 services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile-production
-    image: slackernews:latest
-
-  repl:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    depends_on:
-      - mongodb
-    environment:
-      - DATABASE_URI=mongodb://mongodb.dev/slackernews
-    command:
-      - lein
-      - repl
-      - :headless
-      - :host
-      - "0.0.0.0"
-      - :port
-      - "7002"
-    ports:
-      - 7002:7002
-    volumes:
-      - .:/usr/src/app
-
-  slackernews:
-    extends:
-      service: app
-    depends_on:
-      - mongodb
-    environment:
-      - DATABASE_URI=mongodb://mongodb.dev/slackernews
-    command:
-      - java
-      - -jar
-      - slackernews-0.1.0-SNAPSHOT-standalone.jar
-
   mongodb:
     image: mongo:3.4
     networks:
