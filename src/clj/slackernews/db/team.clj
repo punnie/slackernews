@@ -29,3 +29,9 @@
   [name]
   (let [result (mc/find-one db collection {:team_name name})]
     (-> result (from-db-object true) (dissoc :_id))))
+
+(defn get-team-by-domain
+  "Gets a team by domain"
+  [domain]
+  (let [result (mc/find-one db collection {:domain domain})]
+    (-> result (from-db-object true) (dissoc :_id))))

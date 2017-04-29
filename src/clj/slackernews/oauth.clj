@@ -1,5 +1,5 @@
 (ns slackernews.oauth
-  (:require [clojure.tools.logging :as log]
+  (:require [taoensso.timbre :as log]
             [slackernews.config :as config]
             [slackernews.db.team :as tdb]
             [slackernews.db.user :as udb]

@@ -1,5 +1,5 @@
 (ns slackernews.worker
-  (:require [slackernews.processor :as processor]
+  (:require [slackernews.processor.core :as processor]
             [slackernews.slack.api.channels :as channels]
             [slackernews.slack.api.users :as users]
             [slackernews.db.channel :as cdb]))

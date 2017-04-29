@@ -1,11 +1,10 @@
 (ns slackernews.app
   (:require [aleph.http :as http]
             [aleph.netty :as netty]
-            [clojure.tools.logging :as log]
             [compojure.core :refer [defroutes GET]]
             [compojure.route :refer [not-found resources]]
             [hiccup.core :as h]
-            [hiccup.page :as hp]
+            [mount.core :refer [defstate]]
             [ring.logger :refer [wrap-with-logger]]
             [ring.middleware.keyword-params :refer [wrap-keyword-params]]
             [ring.middleware.params :refer [wrap-params]]
@@ -13,56 +12,21 @@
             [ring.middleware.session.cookie :refer [cookie-store]]
             [ring.util.response :refer [redirect response]]
             [slackernews.config :as config]
-            [slackernews.oauth :as oauth]))
+            [slackernews.controllers.links :as links]
+            [slackernews.controllers.oauth :as oauth]
+            [slackernews.middleware.team-subdomain :refer [wrap-team-subdomain]]
+            [taoensso.timbre :as log]))
 
-(defn front-page
-  ""
-  [{:keys [session params] :as request}]
-  (hp/html5 [:head
-             [:title "Slackernews"]]
-            [:body
-             [:p
-              (str "Hello " (-> request :headers :team))]]))
-
-(defn oauth-authorize
-  ""
-  [{:keys [params session] :as request}]
-  (let [error (:error params)
-        code  (:code params)
-        state (:state params)]
-    (if (nil? error)
-      (let [oauth-response (oauth/request-authorization code)]
-        (if (:ok oauth-response)
-          (let [session (assoc session :user_id (str (:user_id oauth-response)))]
-            (-> (redirect "/")
-                (assoc :session session)))
-          (str "Error!")))
-      (str "Error: " error))))
-
-(defn not-found-page
-  ""
-  []
-  (h/html [:p "Page not found!"]))
-
-(defroutes all-routes
-  (GET "/" [] front-page)
-  (GET "/oauth/authorize" [] oauth-authorize)
+(defroutes app-routes
+  (GET       "/"                [] links/display)
+  (GET       "/oauth/authorize" [] oauth/authorize)
   (resources "/")
-  (not-found (not-found-page)))
+  (not-found "Not found!"))
 
-(defn wrap-team-subdomain
-  ""
-  [handler]
-  (fn [request]
-    (let [team-name (-> (:host (:headers request))
-                        (clojure.string/split #"\.")
-                        first)]
-      (handler (assoc-in request [:headers :team] team-name)))))
-
-(defn handler
+(defn app-handler
   ""
   []
-  (-> #'all-routes
+  (-> #'app-routes
       wrap-team-subdomain
       (wrap-session {:store (cookie-store {:key config/cookie-secret})
                      :cookie-attrs {:max-age 3600}})
@@ -86,3 +50,7 @@
   ""
   [server]
   (.close server))
+
+(defstate http-server
+  :start (start-server {:handler (app-handler) :port config/http-port})
+  :stop (stop-server http-server))

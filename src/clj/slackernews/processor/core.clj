@@ -1,14 +1,14 @@
-(ns slackernews.processor
-  (:require [clojure.tools.logging :as log]
-            [slackernews.models.channel :as channels]
-            [slackernews.models.link :as links]
-            [slackernews.models.message :as messages]
-            [slackernews.models.team :as teams]
-            [slackernews.models.user :as users]
-            [slackernews.db.channel :as cdb]
-            [slackernews.db.link :as ldb]
-            [slackernews.db.message :as mdb]
-            [slackernews.db.user :as udb]))
+(ns slackernews.processor.core
+(:require [taoensso.timbre :as log]
+          [slackernews.models.channel :as channels]
+          [slackernews.models.link :as links]
+          [slackernews.models.message :as messages]
+          [slackernews.models.team :as teams]
+          [slackernews.models.user :as users]
+          [slackernews.db.channel :as cdb]
+          [slackernews.db.link :as ldb]
+          [slackernews.db.message :as mdb]
+          [slackernews.db.user :as udb]))
 
 (defn store-message
   ""

@@ -1,12 +1,12 @@
 (ns slackernews.core
   (:require [mount.core :as mount]
             [slackernews.app :as app]
-            [clojure.tools.logging :as log])
+            [slackernews.config]
+            [slackernews.instrumentation]
+            [taoensso.timbre :as log])
   (:gen-class))
 
-(mount/defstate http-server
-  :start (app/start-server {:handler (app/handler) :port 3000})
-  :stop (app/stop-server http-server))
+(log/swap-config! assoc-in [:level] :info)
 
 (defn stop-app []
   (doseq [component (-> (mount/stop)

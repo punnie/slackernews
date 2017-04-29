@@ -3,7 +3,7 @@
             [monger.collection :as mc]
             [monger.conversion :refer [from-db-object]]
             [monger.operators :refer [$set]]
-            [clojure.tools.logging :as log])
+            [taoensso.timbre :as log])
   (:import org.bson.types.ObjectId))
 
 (def collection "" "users")

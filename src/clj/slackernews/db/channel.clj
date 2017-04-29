@@ -2,7 +2,7 @@
   (:require [slackernews.db.core :refer [db]]
             [monger.collection :as mc]
             [monger.conversion :refer [from-db-object]]
-            [clojure.tools.logging :as log]))
+            [taoensso.timbre :as log]))
 
 (def collection "" "channels")
 
