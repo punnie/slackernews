@@ -6,6 +6,16 @@
   [team]
   (:team_id team))
 
+(defn get-allowed-channels
+  ""
+  [team]
+  (:allowed_channels team))
+
+(defn get-blacklist
+  ""
+  [team]
+  (or (:blacklist team) []))
+
 (defn slack->local
   ""
   [slack-team-data]
