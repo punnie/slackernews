@@ -10,7 +10,7 @@
   [channel]
   (:channel_id channel))
 
-(defn build-channel
+(defn slack->local
   ""
   [team {:keys [id name_normalized creator purpose topic]}]
   (let [team_id (:team_id team)

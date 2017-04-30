@@ -5,7 +5,7 @@
   [link]
   (.getHost (new java.net.URI link)))
 
-(defn build-link
+(defn slack->local
   ""
   [team message {:keys [ts user_id user_name channel_id channel_name team_id title url] :as link-info}]
   (let [link-host (get-link-host url)]

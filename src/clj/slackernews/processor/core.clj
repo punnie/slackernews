@@ -13,12 +13,12 @@
 (defn store-message
   ""
   [team channel message]
-  (mdb/insert-message (messages/build-message team channel message)))
+  (mdb/insert-message (messages/slack->local team channel message)))
 
 (defn store-link
   ""
   [team channel message link-info]
-  (ldb/insert-link (links/build-link team message link-info)))
+  (ldb/insert-link (links/slack->local team message link-info)))
 
 (defn process-links
   ""
@@ -51,10 +51,10 @@
 (defn process-channel
   ""
   [team slack-channel]
-  (cdb/upsert-channel (channels/build-channel team slack-channel)))
+  (cdb/upsert-channel (channels/slack->local team slack-channel)))
 
 (defn process-user
   ""
   [team slack-user]
   (log/info team slack-user)
-  (udb/upsert-user (users/build-user team slack-user)))
+  (udb/upsert-user (users/slack->local team slack-user)))

@@ -6,7 +6,7 @@
   [team]
   (:team_id team))
 
-(defn build-team
+(defn slack->local
   ""
   [slack-team-data]
   (let [access-token (:access_token slack-team-data)

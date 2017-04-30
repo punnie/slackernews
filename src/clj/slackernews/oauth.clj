@@ -20,7 +20,7 @@
           slack-user-info-response (susers/info connection {:user (:user_id auth-test-response)})]
       (if (:ok slack-user-info-response)
         (let [slack-user (:user slack-user-info-response)
-              user (users/build-user team slack-user)]
+              user (users/slack->local team slack-user)]
           (udb/upsert-user user)
           (merge state {:user user}))))
     state))
@@ -35,7 +35,7 @@
           slack-team-info-response (steam/info connection)]
       (if (:ok slack-team-info-response)
         (let [slack-team (:team slack-team-info-response)
-              team (teams/build-team (merge oauth-response slack-team))]
+              team (teams/slack->local (merge oauth-response slack-team))]
           (tdb/upsert-team team)
           (merge state {:team team}))))
     state))

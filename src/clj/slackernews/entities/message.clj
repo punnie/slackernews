@@ -1,6 +1,6 @@
 (ns slackernews.entities.message)
 
-(defn build-message
+(defn slack->local
   ""
   [team channel message]
   (let [channel-id (:channel_id channel)
