@@ -1,10 +1,10 @@
 (ns slackernews.processor.core
 (:require [taoensso.timbre :as log]
-          [slackernews.models.channel :as channels]
-          [slackernews.models.link :as links]
-          [slackernews.models.message :as messages]
-          [slackernews.models.team :as teams]
-          [slackernews.models.user :as users]
+          [slackernews.entities.channel :as channels]
+          [slackernews.entities.link :as links]
+          [slackernews.entities.message :as messages]
+          [slackernews.entities.team :as teams]
+          [slackernews.entities.user :as users]
           [slackernews.db.channel :as cdb]
           [slackernews.db.link :as ldb]
           [slackernews.db.message :as mdb]
@@ -38,7 +38,7 @@
                         :channel_name channel-name
                         :ts ts
                         :team_id team-id}]
-      (log/info user)
+      (if (nil? user-name) (log/info message))
       (store-link team channel message link-info))))
 
 (defn process-message

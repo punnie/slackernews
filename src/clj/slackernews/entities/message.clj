@@ -1,4 +1,4 @@
-(ns slackernews.models.message)
+(ns slackernews.entities.message)
 
 (defn build-message
   ""

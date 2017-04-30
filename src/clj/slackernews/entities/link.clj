@@ -1,4 +1,4 @@
-(ns slackernews.models.link)
+(ns slackernews.entities.link)
 
 (defn get-link-host
   ""

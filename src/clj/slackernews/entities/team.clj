@@ -1,4 +1,4 @@
-(ns slackernews.models.team
+(ns slackernews.entities.team
   (:require [clojure.string :as string]))
 
 (defn get-id

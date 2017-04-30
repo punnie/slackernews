@@ -1,5 +1,5 @@
-(ns slackernews.models.link-test
-  (:require [slackernews.models.link :refer :all]
+(ns slackernews.entities.link-test
+  (:require [slackernews.entities.link :refer :all]
             [clojure.test :refer :all]))
 
 (deftest host-extraction

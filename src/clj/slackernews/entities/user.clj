@@ -1,4 +1,4 @@
-(ns slackernews.models.user)
+(ns slackernews.entities.user)
 
 (defn get-name
   ""

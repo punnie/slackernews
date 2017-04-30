@@ -1,5 +1,5 @@
-(ns slackernews.models.message-test
-  (:require [slackernews.models.message :refer :all]
+(ns slackernews.entities.message-test
+  (:require [slackernews.entities.message :refer :all]
             [clojure.test :refer :all]))
 
 (def single-url "" "Thanks, go to http://google.com for more details!")
