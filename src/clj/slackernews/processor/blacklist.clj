@@ -13,4 +13,4 @@
   ""
   [{:keys [url team] :as link-info}]
   (let [blacklist (teams/get-blacklist team)]
-    (assoc link-info :blacklisted (blacklisted? url blacklist))))
+    (assoc-in link-info [:error :blacklisted] (blacklisted? url blacklist))))
