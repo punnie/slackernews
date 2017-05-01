@@ -49,8 +49,8 @@
                         :attrs
                         :content)
         og          (for [tag (html/select content [:head [:meta (html/attr-starts :property "og:")]])]
-                      (let [tag-attrs (-> tag :attrs)
-                            key       (keyword (clojure.string/replace (:property tag-attrs) (re-pattern "og:") ""))
+                      (let [tag-attrs (:attrs tag)
+                            key       (keyword (string/replace (:property tag-attrs) (re-pattern "og:") ""))
                             value     (:content tag-attrs)]
                         {key value}))]
     {:meta {:title title :description description}
@@ -76,5 +76,4 @@
   (-> link-info
       (request-uri)
       (get-mime-type)
-      (get-meta-information)
-      :meta))
+      (get-meta-information)))
